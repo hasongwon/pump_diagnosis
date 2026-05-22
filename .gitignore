@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Python Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+**/venv/
+**/.venv/
+
+# Python Cache & Compiled Files
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Frontend Build Outputs
+dist/
+**/dist/
+build/
+**/build/
+out/
+.next/
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+.git_backup/
+**/.git_backup/
+
+# Local Environment Variables & Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Large datasets or zips (optional, uncomment if datasets are too large)
+# *.zip
+# *.tar.gz
+# *.rar
