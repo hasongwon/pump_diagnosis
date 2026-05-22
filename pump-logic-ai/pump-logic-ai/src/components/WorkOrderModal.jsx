@@ -27,59 +27,65 @@ export default function WorkOrderModal({ workOrderOpen, setWorkOrderOpen, analys
     ]
   );
 
-  const isCauseActive = (causeName, causeEnName) => {
-    const rc = rootCause.replace(/\s+/g, '').toLowerCase();
-    const cleanCause = (causeName || "").replace(/\s+/g, '').toLowerCase();
-    const cleanCauseEn = (causeEnName || "").replace(/\s+/g, '').toLowerCase();
-    
-    if (cleanCause.includes("조립설치") || cleanCause.includes("축중심") || cleanCauseEn.includes("misalignment")) {
-      if (rc.includes("축정렬불량") || rc.includes("조립설치") || rc.includes("축중심") || rc.includes("misalignment")) {
-        return true;
-      }
-    }
-    if (cleanCause.includes("윤활유부족") || cleanCause.includes("베어링장치") || cleanCauseEn.includes("bearing") || cleanCauseEn.includes("grease")) {
-      if (rc.includes("베어링불량") || rc.includes("윤활유부족") || rc.includes("베어링장치") || rc.includes("bearing") || rc.includes("grease")) {
-        return true;
-      }
-    }
-    if (cleanCause.includes("회전체불평형") || cleanCauseEn.includes("unbalance")) {
-      if (rc.includes("회전체불평형") || rc.includes("unbalance")) {
-        return true;
-      }
-    }
-    if (cleanCause.includes("구동벨트") || cleanCause.includes("벨트느슨함") || cleanCauseEn.includes("belt")) {
-      if (rc.includes("벨트느슨함") || rc.includes("구동벨트") || rc.includes("belt")) {
-        return true;
-      }
-    }
-    
-    return rc.includes(cleanCause) || cleanCause.includes(rc) || 
-           (cleanCauseEn && (rc.includes(cleanCauseEn) || cleanCauseEn.includes(rc)));
-  };
-
-  const isSymptomActive = (symptomLabel, symptomLabelEn) => {
+  const isSymptomActive = (symptom) => {
     if (!analysisResult || !analysisResult.checked_symptoms) {
       const checkArr = ["이상진동", "베어링과열", "과부하", "abnormal vibration", "bearing overheating", "overload"];
-      return checkArr.includes(symptomLabel.toLowerCase()) || checkArr.includes((symptomLabelEn || "").toLowerCase());
+      return checkArr.includes(symptom.label.toLowerCase()) || checkArr.includes((symptom.labelEn || "").toLowerCase());
     }
     return analysisResult.checked_symptoms.some(s => {
-      const cleanS = s.replace(/\s+/g, '').toLowerCase();
-      const cleanLabel = symptomLabel.replace(/\s+/g, '').toLowerCase();
-      const cleanLabelEn = (symptomLabelEn || "").replace(/\s+/g, '').toLowerCase();
-      return cleanS.includes(cleanLabel) || cleanLabel.includes(cleanS) ||
-             (cleanLabelEn && (cleanS.includes(cleanLabelEn) || cleanLabelEn.includes(cleanS)));
+      const cleanS = s.toLowerCase().replace(/\s+/g, '');
+      const cleanLabel = symptom.label.toLowerCase().replace(/\s+/g, '');
+      const cleanLabelEn = (symptom.labelEn || "").toLowerCase().replace(/\s+/g, '');
+      if (cleanS.includes("진동") || cleanS.includes("vibration")) {
+        return cleanLabel.includes("진동") || cleanLabelEn.includes("vibration");
+      }
+      if (cleanS.includes("과열") || cleanS.includes("overheat") || cleanS.includes("temp") || cleanS.includes("온도")) {
+        return cleanLabel.includes("과열") || cleanLabel.includes("온도") || cleanLabelEn.includes("overheat") || cleanLabelEn.includes("temp");
+      }
+      if (cleanS.includes("과부하") || cleanS.includes("overload")) {
+        return cleanLabel.includes("과부하") || cleanLabelEn.includes("overload");
+      }
+      return cleanS.includes(cleanLabel) || cleanLabel.includes(cleanS) || cleanS.includes(cleanLabelEn) || cleanLabelEn.includes(cleanS);
     });
   };
 
-  const printableRows = FAULT_MATRIX_DATA.filter(row => {
-    if (isCauseActive(row.cause, row.causeEn)) return true;
+  const isCauseActive = (row) => {
+    if (!analysisResult) return false;
+    const rc = (analysisResult.root_cause || "").toLowerCase().replace(/\s+/g, '');
+    const cleanCause = row.cause.toLowerCase().replace(/\s+/g, '');
+    const cleanCauseEn = (row.causeEn || "").toLowerCase().replace(/\s+/g, '');
+
+    // 1) root_cause 텍스트 기반 매칭
+    if (rc.includes("alignment") || rc.includes("misalignment") || rc.includes("축정렬") || rc.includes("축중심") || rc.includes("조립설치")) {
+      if (cleanCause.includes("축중심") || cleanCause.includes("조립설치") || cleanCauseEn.includes("alignment") || cleanCauseEn.includes("misalignment")) return true;
+    }
+    if (rc.includes("bearing") || rc.includes("grease") || rc.includes("베어링") || rc.includes("윤활유") || rc.includes("베어링장치")) {
+      if (cleanCause.includes("베어링") || cleanCause.includes("윤활유") || cleanCauseEn.includes("bearing") || cleanCauseEn.includes("grease")) return true;
+    }
+    if (rc.includes("unbalance") || rc.includes("imbalance") || rc.includes("회전체불평형")) {
+      if (cleanCause.includes("회전체불평형") || cleanCauseEn.includes("unbalance") || cleanCauseEn.includes("imbalance")) return true;
+    }
+    if (rc.includes("belt") || rc.includes("slack") || rc.includes("벨트")) {
+      if (cleanCause.includes("벨트") || cleanCauseEn.includes("belt") || cleanCauseEn.includes("slack")) return true;
+    }
+    // 진동 단독 이상 → 회전체 불평형 계열 행 강조
+    if (rc.includes("진동단독") || rc.includes("이상진동") || rc.includes("vibrationonly") || rc.includes("vibrationanomaly")) {
+      if (cleanCause.includes("회전체") || cleanCause.includes("불평형") || cleanCauseEn.includes("unbalance") || cleanCauseEn.includes("vibration")) return true;
+    }
+    // 전류 단독 이상 → 과부하·전압 계열 행 강조
+    if (rc.includes("전류단독") || rc.includes("mcsa") || rc.includes("currentonly") || rc.includes("currentimbalance")) {
+      if (cleanCause.includes("과부하") || cleanCause.includes("전압") || cleanCause.includes("전기품") || cleanCauseEn.includes("overload") || cleanCauseEn.includes("voltage") || cleanCauseEn.includes("motor")) return true;
+    }
+    if (rc.includes(cleanCause) || cleanCause.includes(rc) || rc.includes(cleanCauseEn) || cleanCauseEn.includes(rc)) return true;
+
+    // 2) checked_symptoms 기반: 이 행의 cell에 active 증상이 하나라도 있으면 행 활성화
     return Object.keys(row.cells).some(symptomKey => {
-      const s = SYMPTOMS.find(s => s.key === symptomKey);
-      const symptomLabel = s?.label || "";
-      const symptomLabelEn = s?.labelEn || "";
-      return isSymptomActive(symptomLabel, symptomLabelEn) && row.cells[symptomKey];
+      const symptomDef = SYMPTOMS.find(s => s.key === symptomKey);
+      return symptomDef && isSymptomActive(symptomDef);
     });
-  });
+  };
+
+  const printableRows = FAULT_MATRIX_DATA;
 
   return (
     <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-start justify-center overflow-y-auto p-4 md:p-8 print:p-0 print:bg-white print:relative print:z-auto printable-work-order-wrapper animate-in fade-in duration-300">
@@ -120,7 +126,7 @@ export default function WorkOrderModal({ workOrderOpen, setWorkOrderOpen, analys
             <div className="flex items-center space-x-4 shrink-0">
               <div className="flex flex-col items-center">
                 <img 
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(getMainMaintenanceGuideUrl(rootCause))}`} 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(getMaintenanceGuideUrl(rootCause))}`} 
                   className="w-14 h-14 border border-slate-300 bg-white p-1" 
                   alt="정비 가이드 QR" 
                 />
@@ -192,7 +198,7 @@ export default function WorkOrderModal({ workOrderOpen, setWorkOrderOpen, analys
                     </div>
                   </th>
                   {SYMPTOMS.map(s => {
-                    const active = isSymptomActive(s.label, s.labelEn);
+                    const active = isSymptomActive(s);
                     return (
                       <th 
                         key={s.key} 
@@ -216,7 +222,7 @@ export default function WorkOrderModal({ workOrderOpen, setWorkOrderOpen, analys
                   </tr>
                 ) : (
                   printableRows.map((row, idx) => {
-                    const causeActive = isCauseActive(row.cause, row.causeEn);
+                    const causeActive = isCauseActive(row);
                     return (
                       <tr 
                         key={idx} 
@@ -231,22 +237,28 @@ export default function WorkOrderModal({ workOrderOpen, setWorkOrderOpen, analys
                         </td>
                         {SYMPTOMS.map(s => {
                           const cellVal = row.cells[s.key];
-                          const symptomActive = isSymptomActive(s.label, s.labelEn);
+                          const symptomActive = isSymptomActive(s);
                           const intersectionActive = causeActive && symptomActive && cellVal;
                           
                           return (
                             <td 
                               key={s.key} 
-                              className={`p-0.5 border border-slate-200 font-bold w-[24px] min-w-[24px] max-w-[24px] ${
+                              className={`p-0.5 border border-slate-200 font-bold w-[24px] min-w-[24px] max-w-[24px] text-center ${
                                 intersectionActive 
-                                  ? 'bg-slate-200 text-emerald-900 font-black' 
-                                  : symptomActive 
-                                    ? 'text-slate-800 font-bold'
-                                    : 'text-slate-400 font-normal'
+                                  ? 'bg-emerald-50 text-emerald-800 font-black' 
+                                  : 'bg-white'
                               }`}
                             >
-                              {intersectionActive ? `✔ (${cellVal})` : (
-                                <span className="opacity-15 select-none text-[7px]">{cellVal || ""}</span>
+                              {intersectionActive ? (
+                                <span className="bg-emerald-500 text-white font-extrabold text-[8px] px-1 py-0.5 rounded shadow-sm border border-emerald-400 inline-block w-full">
+                                  {cellVal}
+                                </span>
+                              ) : cellVal ? (
+                                <span className="text-slate-450 opacity-40 select-none font-medium text-[8.5px]">
+                                  {cellVal}
+                                </span>
+                              ) : (
+                                ""
                               )}
                             </td>
                           );

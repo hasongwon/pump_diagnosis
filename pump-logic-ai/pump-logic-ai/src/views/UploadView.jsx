@@ -6,7 +6,8 @@ export default function UploadView({
   uploadedVibrationFile, setUploadedVibrationFile,
   uploadedCurrentFile, setUploadedCurrentFile,
   previewRows, setPreviewRows,
-  previewVibRows, previewCurRows,
+  previewVibRows, setPreviewVibRows,
+  previewCurRows, setPreviewCurRows,
   handleFileUpload, startAnalysis, defaultPreviewData,
   analysisMode, setAnalysisMode,
   t
@@ -22,9 +23,11 @@ export default function UploadView({
       if (fileInputRef.current) fileInputRef.current.value = '';
     } else if (target === 'vib') {
       setUploadedVibrationFile(null);
+      if (setPreviewVibRows) setPreviewVibRows([]);
       if (vibInputRef.current) vibInputRef.current.value = '';
     } else if (target === 'cur') {
       setUploadedCurrentFile(null);
+      if (setPreviewCurRows) setPreviewCurRows([]);
       if (curInputRef.current) curInputRef.current.value = '';
     }
   };
@@ -193,43 +196,46 @@ export default function UploadView({
         </div>
       )}
 
-      {/* Preview Area */}
-      <div className="glass-panel rounded-3xl overflow-hidden shadow-2xl">
-        <div className="px-5 py-4 border-b border-slate-900 bg-slate-950/40 flex justify-between items-center">
-          <h3 className="font-extrabold text-slate-200 flex items-center text-xs tracking-wide">
-            <BarChart2 size={15} className="mr-2 text-cyan-400" /> 
-            <span>{t.upload.previewTitle}</span>
-          </h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead className="text-[9px] text-slate-400 uppercase bg-slate-950/70 border-b border-slate-900 font-mono tracking-wider">
-              <tr>
-                {Object.keys(
-                  analysisMode === 'single' 
-                    ? (previewRows[0] || defaultPreviewData[0]) 
-                    : (previewVibRows[0] || previewCurRows[0] || defaultPreviewData[0])
-                ).map((key) => (
-                  <th key={key} className="px-6 py-3 border-r border-slate-900/60">{key}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {(
-                analysisMode === 'single' 
-                  ? (previewRows.length ? previewRows : defaultPreviewData) 
-                  : (previewVibRows.length ? previewVibRows : previewCurRows.length ? previewCurRows : defaultPreviewData)
-              ).map((row, i) => (
-                <tr key={i} className="border-b border-slate-900/40 hover:bg-slate-900/20 transition-colors font-mono text-slate-300 text-[11px]">
-                  {Object.values(row).map((val, j) => (
-                    <td key={j} className="px-6 py-2.5 whitespace-nowrap border-r border-slate-900/40">{val}</td>
+      {/* Preview Area (Only shown when files are uploaded to prevent confusion) */}
+      {((analysisMode === 'single' && previewRows.length > 0) || 
+        (analysisMode === 'fusion' && (previewVibRows.length > 0 || previewCurRows.length > 0))) && (
+        <div className="glass-panel rounded-3xl overflow-hidden shadow-2xl animate-fade-in">
+          <div className="px-5 py-4 border-b border-slate-900 bg-slate-950/40 flex justify-between items-center">
+            <h3 className="font-extrabold text-slate-200 flex items-center text-xs tracking-wide">
+              <BarChart2 size={15} className="mr-2 text-cyan-400" /> 
+              <span>{t.upload.previewTitle}</span>
+            </h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left">
+              <thead className="text-[9px] text-slate-400 uppercase bg-slate-950/70 border-b border-slate-900 font-mono tracking-wider">
+                <tr>
+                  {Object.keys(
+                    analysisMode === 'single' 
+                      ? previewRows[0] 
+                      : (previewVibRows[0] || previewCurRows[0])
+                  ).map((key) => (
+                    <th key={key} className="px-6 py-3 border-r border-slate-900/60">{key}</th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {(
+                  analysisMode === 'single' 
+                    ? previewRows 
+                    : (previewVibRows.length ? previewVibRows : previewCurRows)
+                ).map((row, i) => (
+                  <tr key={i} className="border-b border-slate-900/40 hover:bg-slate-900/20 transition-colors font-mono text-slate-300 text-[11px]">
+                    {Object.values(row).map((val, j) => (
+                      <td key={j} className="px-6 py-2.5 whitespace-nowrap border-r border-slate-900/40">{val}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="flex justify-end pt-2">
         <button

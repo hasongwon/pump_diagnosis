@@ -206,20 +206,30 @@ body, aside, header, main, div, input, button, table, tr, td, th, p, h1, h2, h3,
 }
 
 /* Background Color Class Utilities in Light Theme */
+.light-theme .bg-slate-955,
 .light-theme .bg-slate-950,
 .light-theme .bg-slate-950\/60,
 .light-theme .bg-slate-950\/45,
 .light-theme .bg-slate-950\/40,
+.light-theme .bg-slate-950\/30,
 .light-theme .bg-slate-950\/20,
 .light-theme .bg-slate-900,
-.light-theme .bg-slate-900\/20,
+.light-theme .bg-slate-900\/60,
+.light-theme .bg-slate-900\/50,
 .light-theme .bg-slate-900\/40,
 .light-theme .bg-slate-900\/35,
-.light-theme .bg-slate-900\/50 {
+.light-theme .bg-slate-900\/20 {
   background: rgba(245, 239, 230, 0.85) !important;
   border-color: rgba(215, 206, 192, 0.5) !important;
 }
 
+.light-theme .hover\:bg-slate-900\/90:hover,
+.light-theme .hover\:bg-slate-800\/60:hover,
+.light-theme .hover\:bg-slate-800:hover {
+  background: rgba(230, 222, 210, 0.95) !important;
+}
+
+.light-theme .bg-slate-955\/80,
 .light-theme .bg-slate-950\/80 {
   background: rgba(238, 231, 220, 0.9) !important;
 }
@@ -231,10 +241,10 @@ body, aside, header, main, div, input, button, table, tr, td, th, p, h1, h2, h3,
 .light-theme h4,
 .light-theme h5,
 .light-theme h6,
+.light-theme .text-white,
 .light-theme .text-slate-100,
 .light-theme .text-slate-200,
-.light-theme .text-slate-250,
-.light-theme .text-white {
+.light-theme .text-slate-250 {
   color: #2B2824 !important; /* Soft dark warm charcoal */
 }
 
@@ -369,6 +379,118 @@ body, aside, header, main, div, input, button, table, tr, td, th, p, h1, h2, h3,
 .light-theme .light-theme-modal button.bg-indigo-600 {
   background: #4338ca !important;
   color: white !important;
+}
+
+/* Keep Dark Theme Preservation for Specific Accent Elements (High Contrast Recovery) */
+.light-theme .keep-dark {
+  background: linear-gradient(to right, #020617, rgba(15, 23, 42, 0.75), #020617) !important;
+  border-color: rgba(30, 41, 59, 0.8) !important;
+}
+
+.light-theme .keep-dark h1,
+.light-theme .keep-dark h2,
+.light-theme .keep-dark h3,
+.light-theme .keep-dark h4,
+.light-theme .keep-dark h5,
+.light-theme .keep-dark h6,
+.light-theme .keep-dark .text-white {
+  color: #ffffff !important;
+}
+
+.light-theme .keep-dark p,
+.light-theme .keep-dark .text-slate-100,
+.light-theme .keep-dark .text-slate-200 {
+  color: #f1f5f9 !important;
+}
+
+.light-theme .keep-dark .text-slate-300,
+.light-theme .keep-dark .text-slate-350 {
+  color: #cbd5e1 !important;
+}
+
+.light-theme .keep-dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+.light-theme .keep-dark .text-slate-500,
+.light-theme .keep-dark .text-slate-600 {
+  color: #64748b !important;
+}
+
+.light-theme .keep-dark .text-emerald-400 {
+  color: #34d399 !important; /* Emerald green */
+}
+
+.light-theme .keep-dark .text-cyan-400 {
+  color: #22d3ee !important; /* Bright cyan */
+}
+
+.light-theme .keep-dark .text-indigo-400 {
+  color: #818cf8 !important; /* Bright light indigo */
+}
+
+.light-theme .keep-dark .bg-emerald-500\/10 {
+  background: rgba(16, 185, 129, 0.15) !important;
+}
+
+.light-theme .keep-dark .border-emerald-500\/20,
+.light-theme .keep-dark .border-emerald-500\/35 {
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+.light-theme .keep-dark .bg-slate-950\/60,
+.light-theme .keep-dark .bg-slate-950\/70,
+.light-theme .keep-dark .bg-slate-950\/40,
+.light-theme .keep-dark .bg-slate-950\/30 {
+  background: rgba(2, 6, 23, 0.75) !important;
+  border-color: rgba(30, 41, 59, 0.8) !important;
+}
+
+.light-theme .keep-dark .bg-indigo-500\/10 {
+  background: rgba(99, 102, 241, 0.15) !important;
+}
+
+.light-theme .keep-dark .border-indigo-500\/25 {
+  border-color: rgba(99, 102, 241, 0.35) !important;
+}
+
+.light-theme .keep-dark .bg-slate-900\/40,
+.light-theme .keep-dark .bg-slate-900\/35 {
+  background: rgba(15, 23, 42, 0.6) !important;
+}
+
+.light-theme .keep-dark .border-slate-900\/80 {
+  border-color: rgba(15, 23, 42, 0.9) !important;
+}
+
+.light-theme .keep-dark svg {
+  color: #22d3ee !important; /* Bright cyan */
+}
+
+/* Light Theme Indigo/Cyan Accent Badges Enhancement */
+.light-theme .bg-indigo-500\/25 {
+  background: rgba(99, 102, 241, 0.15) !important;
+}
+.light-theme .text-indigo-300 {
+  color: #4338ca !important; /* Indigo-700 */
+}
+.light-theme .text-indigo-400 {
+  color: #4f46e5 !important;
+}
+.light-theme .text-cyan-300 {
+  color: #0e7490 !important; /* Cyan-700 */
+}
+.light-theme .text-emerald-300 {
+  color: #047857 !important; /* Emerald-700 */
+}
+.light-theme .border-indigo-500\/30 {
+  border-color: rgba(99, 102, 241, 0.3) !important;
+}
+
+/* Extra light overrides for bg-slate-950/70 to ensure it gets themed */
+.light-theme .bg-slate-950\/70 {
+  background: rgba(245, 239, 230, 0.85) !important;
+  border-color: rgba(215, 206, 192, 0.5) !important;
 }
 
 /* Print Overrides */

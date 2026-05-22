@@ -30,27 +30,6 @@ export default function ManualsView({ t }) {
     },
   ];
 
-  // Recommendations of what to add to the manual library (requested by user)
-  const recommendationsList = [
-    {
-      title: isEn ? "Interactive Standard Values Calculator" : "상태 평가 기준치 실시간 오차 연산기",
-      desc: isEn 
-        ? "Allows operators to input physical measurements on-site and instantly verify if tolerances comply with standard guidelines." 
-        : "현장 계측치를 입력하면 오차가 표 6.7.9 표준 규격 내 허용치에 충족하는지 실시간 판정합니다."
-    },
-    {
-      title: isEn ? "MCSA Motor Harmonic Peak Simulator" : "전동기 전류 스펙트럼 주파수 시뮬레이터",
-      desc: isEn 
-        ? "A visual sandbox showing how stator shorts and rotor bar cracks affect electrical sideband peaks." 
-        : "고정자 단락 및 회전자 바 크랙 결함 발생 시 나타나는 극통과 주파수 Peak 추이를 그래프로 사전 교육합니다."
-    },
-    {
-      title: isEn ? "Interactive Urgent Fault Response Flowchart" : "고장 긴급 대응 인터랙티브 의사결정 나무 (SOP Tree)",
-      desc: isEn 
-        ? "A step-by-step interactive troubleshooting flow based on the Water Grid Maintenance Standard Manual." 
-        : "상수도 기준 매뉴얼에 의거하여 알림톡 발송 시 현장 근무자가 밟아야 할 정비 우선순위를 트리형태로 제공합니다."
-    }
-  ];
 
   if (activeManual) {
     return (
@@ -93,37 +72,7 @@ export default function ManualsView({ t }) {
         ))}
       </div>
 
-      {/* Recommended Upgrades Section (added at the bottom to reply to the user request) */}
-      <div className="glass-panel rounded-3xl p-6.5 border border-indigo-500/15 shadow-[0_0_30px_rgba(99,102,241,0.03)] mt-8">
-        <div className="flex items-center space-x-2.5 mb-4">
-          <div className="w-8 h-8 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400">
-            <Info size={16} />
-          </div>
-          <div>
-            <h3 className="text-xs font-black text-white uppercase tracking-wider">
-              {isEn ? "💡 Predictive Maintenance Library Suggested Upgrades" : "💡 예비 보전 매뉴얼실 권장 고도화 추가 제안"}
-            </h3>
-            <p className="text-[10px] text-slate-500 font-mono mt-0.5">{isEn ? "INTELLIGENT RAG ASSISTANT EXTENSION ROADMAP" : "상수도관망 유지관리 지침 표 6.7.9 연동 규격 고도화 추천안"}</p>
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 text-[11px]">
-          {recommendationsList.map((rec, i) => (
-            <div key={i} className="bg-slate-950/40 border border-slate-900 rounded-2xl p-4 leading-normal flex flex-col justify-between">
-              <div>
-                <h4 className="font-extrabold text-slate-200 mb-1.5 flex items-center">
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mr-2"></span>
-                  {rec.title}
-                </h4>
-                <p className="text-slate-450 text-[10.5px] leading-relaxed break-words font-medium">{rec.desc}</p>
-              </div>
-              <span className="text-[9.5px] font-black text-indigo-400 mt-4 block font-mono uppercase tracking-wide">
-                {isEn ? "[Status: ACTIVE PROTOTYPE]" : "[개발 상태: 프로토타입 시연 가능]"}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

@@ -7,6 +7,10 @@ export default function DiagnosticsView({ setCurrentPage, telemetryData, analysi
   const isDanger = analysisResult ? analysisResult.risk_level === 'DANGER' : true;
   const isWarning = analysisResult ? analysisResult.risk_level === 'WARNING' : false;
   
+  const vibVal = analysisResult && typeof analysisResult.vibration_rms !== 'undefined' ? analysisResult.vibration_rms : (isDanger || isWarning ? 14.22 : 1.85);
+  const curVal = analysisResult && typeof analysisResult.current_imbalance !== 'undefined' ? analysisResult.current_imbalance : (isDanger || isWarning ? 4.8 : 0.15);
+  const isNormalState = !isDanger && !isWarning;
+  
   const riskTitle = lang === 'ko' 
     ? (isDanger ? "위험" : isWarning ? "주의" : "정상") 
     : (isDanger ? "DANGER" : isWarning ? "WARNING" : "NORMAL");
@@ -41,37 +45,16 @@ export default function DiagnosticsView({ setCurrentPage, telemetryData, analysi
         ? "진동 신호 RMS 폭증 및 전류 불균형 3차 조화 주파수 왜곡율이 동시에 검출되어 고장 가능성이 극대화되었습니다." 
         : "Vibration signal RMS surge and current unbalance 3rd harmonic distortion are simultaneously detected, maximizing fault probability.");
 
-  const [matrixFilterActive, setMatrixFilterActive] = useState(true);
+  const [matrixFilterActive, setMatrixFilterActive] = useState(false);
   const [hoveredCell, setHoveredCell] = useState(null); // {row, s, cellVal} for interactive tooltips!
 
-  const isCauseActive = (row) => {
-    if (!analysisResult) return false;
-    const rc = (analysisResult.root_cause || "").toLowerCase().replace(/\s+/g, '');
-    const cleanCause = row.cause.toLowerCase().replace(/\s+/g, '');
-    const cleanCauseEn = (row.causeEn || "").toLowerCase().replace(/\s+/g, '');
-    
-    if (rc.includes("alignment") || rc.includes("misalignment") || rc.includes("축정렬") || rc.includes("축중심") || rc.includes("조립설치")) {
-      return cleanCause.includes("축중심") || cleanCause.includes("조립설치") || cleanCauseEn.includes("alignment") || cleanCauseEn.includes("misalignment");
-    }
-    if (rc.includes("bearing") || rc.includes("grease") || rc.includes("베어링") || rc.includes("윤활유") || rc.includes("베어링장치")) {
-      return cleanCause.includes("베어링") || cleanCause.includes("윤활유") || cleanCauseEn.includes("bearing") || cleanCauseEn.includes("grease");
-    }
-    if (rc.includes("unbalance") || rc.includes("imbalance") || rc.includes("회전체불평형")) {
-      return cleanCause.includes("회전체불평형") || cleanCauseEn.includes("unbalance") || cleanCauseEn.includes("imbalance");
-    }
-    if (rc.includes("belt") || rc.includes("slack") || rc.includes("벨트")) {
-      return cleanCause.includes("벨트") || cleanCauseEn.includes("belt") || cleanCauseEn.includes("slack");
-    }
-    return rc.includes(cleanCause) || cleanCause.includes(rc) || rc.includes(cleanCauseEn) || cleanCauseEn.includes(rc);
-  };
-
+  // ── isSymptomActive: checked_symptoms 배열 → 열(column) 활성 여부 ──────
   const isSymptomActive = (symptom) => {
     if (!analysisResult || !analysisResult.checked_symptoms) return false;
     return analysisResult.checked_symptoms.some(s => {
       const cleanS = s.toLowerCase().replace(/\s+/g, '');
       const cleanLabel = symptom.label.toLowerCase().replace(/\s+/g, '');
       const cleanLabelEn = (symptom.labelEn || "").toLowerCase().replace(/\s+/g, '');
-      
       if (cleanS.includes("진동") || cleanS.includes("vibration")) {
         return cleanLabel.includes("진동") || cleanLabelEn.includes("vibration");
       }
@@ -82,6 +65,43 @@ export default function DiagnosticsView({ setCurrentPage, telemetryData, analysi
         return cleanLabel.includes("과부하") || cleanLabelEn.includes("overload");
       }
       return cleanS.includes(cleanLabel) || cleanLabel.includes(cleanS) || cleanS.includes(cleanLabelEn) || cleanLabelEn.includes(cleanS);
+    });
+  };
+
+  // ── isCauseActive: root_cause 텍스트 + active symptom 포함 행 → 행(row) 활성 여부 ──
+  const isCauseActive = (row) => {
+    if (!analysisResult) return false;
+    const rc = (analysisResult.root_cause || "").toLowerCase().replace(/\s+/g, '');
+    const cleanCause = row.cause.toLowerCase().replace(/\s+/g, '');
+    const cleanCauseEn = (row.causeEn || "").toLowerCase().replace(/\s+/g, '');
+
+    // 1) root_cause 텍스트 기반 매칭
+    if (rc.includes("alignment") || rc.includes("misalignment") || rc.includes("축정렬") || rc.includes("축중심") || rc.includes("조립설치")) {
+      if (cleanCause.includes("축중심") || cleanCause.includes("조립설치") || cleanCauseEn.includes("alignment") || cleanCauseEn.includes("misalignment")) return true;
+    }
+    if (rc.includes("bearing") || rc.includes("grease") || rc.includes("베어링") || rc.includes("윤활유") || rc.includes("베어링장치")) {
+      if (cleanCause.includes("베어링") || cleanCause.includes("윤활유") || cleanCauseEn.includes("bearing") || cleanCauseEn.includes("grease")) return true;
+    }
+    if (rc.includes("unbalance") || rc.includes("imbalance") || rc.includes("회전체불평형")) {
+      if (cleanCause.includes("회전체불평형") || cleanCauseEn.includes("unbalance") || cleanCauseEn.includes("imbalance")) return true;
+    }
+    if (rc.includes("belt") || rc.includes("slack") || rc.includes("벨트")) {
+      if (cleanCause.includes("벨트") || cleanCauseEn.includes("belt") || cleanCauseEn.includes("slack")) return true;
+    }
+    // 진동 단독 이상 → 회전체 불평형 계열 행 강조
+    if (rc.includes("진동단독") || rc.includes("이상진동") || rc.includes("vibrationonly") || rc.includes("vibrationanomaly")) {
+      if (cleanCause.includes("회전체") || cleanCause.includes("불평형") || cleanCauseEn.includes("unbalance") || cleanCauseEn.includes("vibration")) return true;
+    }
+    // 전류 단독 이상 → 과부하·전압 계열 행 강조
+    if (rc.includes("전류단독") || rc.includes("mcsa") || rc.includes("currentonly") || rc.includes("currentimbalance")) {
+      if (cleanCause.includes("과부하") || cleanCause.includes("전압") || cleanCause.includes("전기품") || cleanCauseEn.includes("overload") || cleanCauseEn.includes("voltage") || cleanCauseEn.includes("motor")) return true;
+    }
+    if (rc.includes(cleanCause) || cleanCause.includes(rc) || rc.includes(cleanCauseEn) || cleanCauseEn.includes(rc)) return true;
+
+    // 2) checked_symptoms 기반: 이 행의 cell에 active 증상이 하나라도 있으면 행 활성화
+    return Object.keys(row.cells).some(symptomKey => {
+      const symptomDef = SYMPTOMS.find(s => s.key === symptomKey);
+      return symptomDef && isSymptomActive(symptomDef);
     });
   };
 
@@ -269,15 +289,29 @@ export default function DiagnosticsView({ setCurrentPage, telemetryData, analysi
               </div>
               <ul className="text-slate-400 space-y-1.5 ml-9 text-[10.5px] list-disc list-inside marker:text-slate-700 leading-normal font-sans">
                 {lang === 'ko' ? (
-                  <>
-                    <li>Z축 주파수 2X 스펙트럼 Peak 변동 감지</li>
-                    <li>RMS <span className="text-rose-400 font-bold">14.22 mm/s</span> 검출 (임계 56% 초과)</li>
-                  </>
+                  isNormalState ? (
+                    <>
+                      <li>Z축 주파수 스펙트럼 Peak 안정화 유지</li>
+                      <li>실측 RMS <span className="text-emerald-400 font-bold">{vibVal} mm/s</span> (정상 임계치 이내)</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>Z축 주파수 특정 peak 변동 및 가속 에너지 증가 감지</li>
+                      <li>실측 RMS <span className="text-rose-400 font-bold">{vibVal} mm/s</span> (정상 임계치 초과)</li>
+                    </>
+                  )
                 ) : (
-                  <>
-                    <li>Z-axis 2X spectrum peak anomaly detected</li>
-                    <li>RMS <span className="text-rose-400 font-bold">14.22 mm/s</span> (exceeds threshold by 56%)</li>
-                  </>
+                  isNormalState ? (
+                    <>
+                      <li>Z-axis spectrum peak stabilized</li>
+                      <li>Measured RMS <span className="text-emerald-400 font-bold">{vibVal} mm/s</span> (within threshold)</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>Z-axis specific peak fluctuation & acceleration energy surge</li>
+                      <li>Measured RMS <span className="text-rose-400 font-bold">{vibVal} mm/s</span> (exceeds threshold)</li>
+                    </>
+                  )
                 )}
               </ul>
             </div>
@@ -291,15 +325,29 @@ export default function DiagnosticsView({ setCurrentPage, telemetryData, analysi
               </div>
               <ul className="text-slate-400 space-y-1.5 ml-9 text-[10.5px] list-disc list-inside marker:text-slate-700 leading-normal font-sans">
                 {lang === 'ko' ? (
-                  <>
-                    <li>U/V/W 3상 위상 균형도 4.8% 변위 하락</li>
-                    <li>회전 전주기 고조파 토크 에너지 왜곡율 초과</li>
-                  </>
+                  isNormalState ? (
+                    <>
+                      <li>U/V/W 3상 균형도 최적 균등 분배</li>
+                      <li>3상 위상 불균형도 <span className="text-emerald-400 font-bold">{curVal}%</span> (지극히 안정적)</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>U/V/W 3상 위상 균형 왜곡 및 토크 고조파 왜곡 검출</li>
+                      <li>3상 위상 불균형도 <span className="text-rose-400 font-bold">{curVal}%</span> (불평형 변위 감지)</li>
+                    </>
+                  )
                 ) : (
-                  <>
-                    <li>U/V/W 3-phase phase balance drops by 4.8%</li>
-                    <li>Harmonic torque energy distortion exceeds limit</li>
-                  </>
+                  isNormalState ? (
+                    <>
+                      <li>U/V/W 3-phase balance optimally distributed</li>
+                      <li>Phase imbalance <span className="text-emerald-400 font-bold">{curVal}%</span> (stable balance)</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>U/V/W 3-phase phase unbalance & torque harmonics detected</li>
+                      <li>Phase imbalance <span className="text-rose-400 font-bold">{curVal}%</span> (unbalance displacement)</li>
+                    </>
+                  )
                 )}
               </ul>
             </div>
@@ -313,15 +361,29 @@ export default function DiagnosticsView({ setCurrentPage, telemetryData, analysi
               </div>
               <ul className="text-slate-400 space-y-1.5 ml-9 text-[10.5px] list-disc list-inside marker:text-slate-700 leading-normal font-sans">
                 {lang === 'ko' ? (
-                  <>
-                    <li>두 이종 파이프라인 판단 신뢰성: <span className="text-emerald-400 font-bold">96%</span></li>
-                    <li>XGBoost 다중 모델 연동 교차 검증 완료</li>
-                  </>
+                  isNormalState ? (
+                    <>
+                      <li>두 이종 파이프라인 판단 신뢰성: <span className="text-emerald-400 font-bold">99%</span></li>
+                      <li>실시간 다중 센서 융합 RAG 모니터링 가동</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>두 이종 파이프라인 판단 신뢰성: <span className="text-rose-400 font-bold">96.4%</span></li>
+                      <li>XGBoost 다중 모델 연동 교차 검증 완료</li>
+                    </>
+                  )
                 ) : (
-                  <>
-                    <li>Multi-sensor pipeline confidence: <span className="text-emerald-400 font-bold">96.4%</span></li>
-                    <li>XGBoost cross-validation complete</li>
-                  </>
+                  isNormalState ? (
+                    <>
+                      <li>Multi-sensor pipeline confidence: <span className="text-emerald-400 font-bold">99%</span></li>
+                      <li>Real-time multi-sensor fusion RAG monitor active</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>Multi-sensor pipeline confidence: <span className="text-rose-400 font-bold">96.4%</span></li>
+                      <li>XGBoost cross-validation complete</li>
+                    </>
+                  )
                 )}
               </ul>
             </div>
@@ -433,23 +495,28 @@ export default function DiagnosticsView({ setCurrentPage, telemetryData, analysi
                           <td 
                             key={s.key} 
                             onClick={() => cellVal && setHoveredCell({ row, s, cellVal })}
-                            className={`px-1 py-3 border-r border-slate-900 font-mono transition-all duration-300 ${
+                            className={`px-1 py-3 border-r border-slate-900 font-mono transition-all duration-350 cursor-pointer ${
                               intersectionActive 
-                                ? 'bg-emerald-500/20 text-emerald-300 font-black text-xs scale-105 shadow-[0_0_10px_rgba(16,185,129,0.25)] border-b-2 border-b-emerald-400 cursor-help' 
+                                ? 'bg-emerald-500/10 text-emerald-300 font-black text-xs relative cursor-help shadow-[0_0_12px_rgba(16,185,129,0.15)]' 
                                 : symptomActive 
-                                  ? 'bg-slate-900/40 text-slate-500'
+                                  ? 'bg-slate-900/45 text-slate-500/60'
                                   : causeActive
-                                    ? 'bg-indigo-500/5 text-slate-600'
-                                    : 'text-slate-700'
+                                    ? 'bg-indigo-500/5 text-slate-500/50'
+                                    : 'text-slate-600/40'
                             }`}
                           >
                             {intersectionActive ? (
-                              <div className="flex items-center justify-center space-x-0.5">
-                                <span>🔥</span>
-                                <span className="underline decoration-emerald-400 decoration-2">{translateCell(cellVal)}</span>
+                              <div className="flex items-center justify-center">
+                                <span className="bg-emerald-500 text-slate-950 font-black text-xs px-2.5 py-0.5 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.75)] border border-emerald-450 animate-pulse">
+                                  {translateCell(cellVal)}
+                                </span>
                               </div>
+                            ) : cellVal ? (
+                              <span className="text-slate-400 opacity-40 select-none font-extrabold text-xs">
+                                {translateCell(cellVal)}
+                              </span>
                             ) : (
-                              <span className="opacity-15 select-none">{translateCell(cellVal) || ""}</span>
+                              ""
                             )}
                           </td>
                         );

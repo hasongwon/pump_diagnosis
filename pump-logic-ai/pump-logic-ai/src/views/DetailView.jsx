@@ -1,15 +1,15 @@
 import React from 'react';
 import { Activity, Printer, CheckCircle, ShieldAlert } from 'lucide-react';
 
-export default function DetailView({ analysisResult, setWorkOrderOpen, t }) {
+export default function DetailView({ analysisResult, setWorkOrderOpen, t, lang }) {
   const isDanger = analysisResult ? analysisResult.risk_level === 'DANGER' : true;
   const isWarning = analysisResult ? analysisResult.risk_level === 'WARNING' : false;
   
   const riskTitle = isDanger 
     ? (t.dashboard?.dangerStatus || "위험") 
     : isWarning 
-      ? (t.dashboard?.warningStatus || "주의") 
-      : (t.dashboard?.normalStatus || "정상");
+    ? (t.dashboard?.warningStatus || "주의") 
+    : (t.dashboard?.normalStatus || "정상");
       
   const riskColorClass = isDanger ? "text-rose-400" : isWarning ? "text-amber-400" : "text-emerald-400";
   const riskBadgeClass = isDanger ? "bg-rose-500/20 text-rose-400 border-rose-500/35" : isWarning ? "bg-amber-500/20 text-amber-400 border-amber-500/35" : "bg-emerald-500/20 text-emerald-400 border-emerald-500/35";
@@ -25,7 +25,7 @@ export default function DetailView({ analysisResult, setWorkOrderOpen, t }) {
   ];
 
   const handleAckClick = () => {
-    const msg = t.lang === 'en' 
+    const msg = lang === 'en' 
       ? "Alarm acknowledgment (ACK) signature completed. Synchronizing to the maintenance notification network." 
       : "경보 접수(ACK) 서명이 완료되었습니다. 보전팀 알림망에 수신 동기화 처리됩니다.";
     alert(msg);

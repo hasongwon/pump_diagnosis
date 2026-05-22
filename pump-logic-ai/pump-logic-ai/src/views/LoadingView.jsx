@@ -3,7 +3,7 @@ import { RefreshCw, CheckCircle } from 'lucide-react';
 
 export default function LoadingView({ progress }) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] animate-fade-in print:hidden relative">
+    <div className="flex flex-col items-center justify-center min-h-[70vh] animate-fade-in print:hidden relative keep-dark">
       
       {/* ambient glows */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-500/10 blur-[90px] rounded-full pointer-events-none"></div>
