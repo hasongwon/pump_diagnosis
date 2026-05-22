@@ -13,8 +13,18 @@ from pydantic import BaseModel, Field
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_community.vectorstores import Chroma
 
-# Google Gemini API 키 설정
-os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY", "AIzaSyCJU34c_EATYewhmJnkEwPU-QR5jXe1xHI")
+# 로컬 .env 파일 로드 (보안을 위해 API 키 하드코딩 제거 및 로컬 환경변수 파일 분리)
+env_path = Path(__file__).parent / ".env"
+if env_path.exists():
+    with open(env_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, val = line.split("=", 1)
+                os.environ[key.strip()] = val.strip().strip('"').strip("'")
+
+if not os.environ.get("GOOGLE_API_KEY"):
+    print("[⚠️ 경고] GOOGLE_API_KEY 환경 변수가 설정되지 않았습니다. 로컬 .env 파일 또는 시스템 환경 변수를 확인하십시오.")
 
 app = FastAPI(title="Pump Diagnosis RAG Backend")
 

@@ -1,7 +1,381 @@
 @import "tailwindcss";
 
+:root {
+  --color-brand-cyan: #06b6d4;
+  --color-brand-indigo: #6366f1;
+  --color-brand-purple: #a855f7;
+  --color-brand-rose: #f43f5e;
+}
+
 body {
   margin: 0;
-  background: #020b14;
-  color: white;
+  background: radial-gradient(circle at 50% 50%, #031428 0%, #01070e 100%);
+  color: #e2e8f0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Smooth globally themed transitions */
+body, aside, header, main, div, input, button, table, tr, td, th, p, h1, h2, h3, h4, h5, h6 {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Premium Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.4);
+}
+
+/* Glassmorphism Styles */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+.glass-panel-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(99, 102, 241, 0.25);
+  box-shadow: 0 12px 40px 0 rgba(99, 102, 241, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Glowing Neon Texts and Shadows */
+.glow-cyan {
+  text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+}
+
+.glow-indigo {
+  text-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+
+.glow-rose {
+  text-shadow: 0 0 10px rgba(244, 63, 94, 0.5);
+}
+
+.shadow-glow-cyan {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
+}
+
+.shadow-glow-indigo {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+}
+
+.shadow-glow-rose {
+  box-shadow: 0 0 20px rgba(244, 63, 94, 0.2);
+}
+
+/* Pulsing Ambient Background Glows */
+@keyframes ambientGlow {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.25;
+    transform: scale(1.1);
+  }
+}
+
+.ambient-glow-indigo {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.06) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: ambientGlow 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.ambient-glow-cyan {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.05) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(60px);
+  animation: ambientGlow 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Animations */
+.animate-slide-up {
+  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Diagonal split for standard table header */
+.diagonal-header {
+  position: relative;
+  background-image: linear-gradient(to top right, transparent 49.5%, rgba(255,255,255,0.08) 50%, transparent 50.5%);
+}
+
+/* ==========================================================================
+   Light Theme Styling Overrides
+   ========================================================================== */
+.light-theme {
+  background: radial-gradient(circle at 50% 50%, #ECE6DB 0%, #E3DCCE 100%) !important;
+  color: #2B2824 !important;
+}
+
+.light-theme body {
+  background: radial-gradient(circle at 50% 50%, #ECE6DB 0%, #E3DCCE 100%) !important;
+  color: #2B2824 !important;
+}
+
+/* Custom Scrollbar in Light Theme */
+.light-theme ::-webkit-scrollbar-track {
+  background: rgba(220, 212, 200, 0.4);
+}
+.light-theme ::-webkit-scrollbar-thumb {
+  background: rgba(140, 130, 115, 0.2);
+}
+.light-theme ::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 130, 115, 0.4);
+}
+
+/* Sidebar & Header Overrides */
+.light-theme aside {
+  background: rgba(253, 251, 247, 0.85) !important;
+  border-color: rgba(215, 206, 192, 0.7) !important;
+  box-shadow: 4px 0 24px rgba(139, 131, 115, 0.04);
+}
+
+.light-theme header {
+  background: rgba(253, 251, 247, 0.7) !important;
+  border-color: rgba(215, 206, 192, 0.7) !important;
+  box-shadow: 0 4px 20px rgba(139, 131, 115, 0.02);
+}
+
+/* Glass Panels in Light Theme */
+.light-theme .glass-panel {
+  background: rgba(253, 251, 247, 0.72) !important;
+  border-color: rgba(215, 206, 192, 0.6) !important;
+  box-shadow: 0 8px 32px 0 rgba(139, 131, 115, 0.06) !important;
+  color: #2B2824 !important;
+}
+
+.light-theme .glass-panel-hover:hover {
+  background: rgba(253, 251, 247, 0.88) !important;
+  border-color: rgba(99, 102, 241, 0.45) !important;
+  box-shadow: 0 12px 40px 0 rgba(99, 102, 241, 0.06) !important;
+}
+
+/* Background Color Class Utilities in Light Theme */
+.light-theme .bg-slate-950,
+.light-theme .bg-slate-950\/60,
+.light-theme .bg-slate-950\/45,
+.light-theme .bg-slate-950\/40,
+.light-theme .bg-slate-950\/20,
+.light-theme .bg-slate-900,
+.light-theme .bg-slate-900\/20,
+.light-theme .bg-slate-900\/40,
+.light-theme .bg-slate-900\/35,
+.light-theme .bg-slate-900\/50 {
+  background: rgba(245, 239, 230, 0.85) !important;
+  border-color: rgba(215, 206, 192, 0.5) !important;
+}
+
+.light-theme .bg-slate-950\/80 {
+  background: rgba(238, 231, 220, 0.9) !important;
+}
+
+/* Global Text Colors Overrides for Light Theme */
+.light-theme h1,
+.light-theme h2,
+.light-theme h3,
+.light-theme h4,
+.light-theme h5,
+.light-theme h6,
+.light-theme .text-slate-100,
+.light-theme .text-slate-200,
+.light-theme .text-slate-250,
+.light-theme .text-white {
+  color: #2B2824 !important; /* Soft dark warm charcoal */
+}
+
+.light-theme p,
+.light-theme .text-slate-300,
+.light-theme .text-slate-350,
+.light-theme .text-slate-400,
+.light-theme .text-slate-450 {
+  color: #615C55 !important; /* Soothing stone secondary */
+}
+
+.light-theme .text-slate-500 {
+  color: #8C8273 !important; /* Muted warm stone */
+}
+
+/* Border Color Class Utilities in Light Theme */
+.light-theme .border-slate-900,
+.light-theme .border-slate-900\/60,
+.light-theme .border-slate-900\/80,
+.light-theme .border-slate-800,
+.light-theme .border-slate-800\/40,
+.light-theme .border-slate-800\/60,
+.light-theme .border-slate-800\/80,
+.light-theme .border-slate-700 {
+  border-color: rgba(215, 206, 192, 0.7) !important;
+}
+
+/* Inputs & Forms in Light Theme */
+.light-theme input,
+.light-theme select,
+.light-theme textarea {
+  background: rgba(253, 251, 247, 0.95) !important;
+  border-color: rgba(215, 206, 192, 0.8) !important;
+  color: #2B2824 !important;
+}
+
+.light-theme input::placeholder {
+  color: #AC9F8E !important;
+}
+
+/* Table styling for Light Theme */
+.light-theme table thead tr {
+  background: rgba(238, 231, 220, 0.9) !important;
+}
+.light-theme table th {
+  color: #615C55 !important;
+  border-color: rgba(215, 206, 192, 0.6) !important;
+  background: rgba(238, 231, 220, 0.8) !important;
+}
+.light-theme table tr {
+  border-color: rgba(215, 206, 192, 0.4) !important;
+}
+.light-theme table td {
+  border-color: rgba(215, 206, 192, 0.4) !important;
+  color: #46423D !important;
+}
+
+/* Interactive elements in Light Theme */
+.light-theme .text-cyan-400 {
+  color: #0369a1 !important; /* Sky-700 */
+}
+.light-theme .text-cyan-300 {
+  color: #0e7490 !important; /* Cyan-700 */
+}
+.light-theme .text-indigo-400 {
+  color: #4338ca !important; /* Indigo-700 */
+}
+.light-theme .text-rose-400 {
+  color: #be123c !important; /* Rose-700 */
+}
+.light-theme .text-amber-400 {
+  color: #b45309 !important; /* Amber-700 */
+}
+.light-theme .text-emerald-400 {
+  color: #047857 !important; /* Emerald-700 */
+}
+
+/* Glow effects in Light Theme */
+.light-theme .glow-cyan,
+.light-theme .glow-indigo,
+.light-theme .glow-rose {
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05) !important;
+}
+
+.light-theme .ambient-glow-indigo,
+.light-theme .ambient-glow-cyan {
+  opacity: 0.01 !important;
+}
+
+.light-theme .bg-slate-900\/35 {
+  background: rgba(245, 239, 230, 0.55) !important;
+}
+
+.light-theme .bg-indigo-600\/20 {
+  background: rgba(99, 102, 241, 0.06) !important;
+}
+
+.light-theme .light-theme-modal {
+  background: #ECE6DB !important;
+  border-color: rgba(215, 206, 192, 0.8) !important;
+  color: #2B2824 !important;
+}
+
+.light-theme .light-theme-modal .bg-slate-950\/40,
+.light-theme .light-theme-modal .bg-slate-950\/70,
+.light-theme .light-theme-modal .bg-slate-950\/30 {
+  background: rgba(245, 239, 230, 0.85) !important;
+  border-color: rgba(215, 206, 192, 0.5) !important;
+}
+
+.light-theme .light-theme-modal .text-white {
+  color: #2B2824 !important;
+}
+
+.light-theme .light-theme-modal .text-slate-200,
+.light-theme .light-theme-modal .text-slate-350,
+.light-theme .light-theme-modal .text-slate-300 {
+  color: #46423D !important;
+}
+
+.light-theme .light-theme-modal .text-slate-400,
+.light-theme .light-theme-modal .text-slate-500 {
+  color: #8C8273 !important;
+}
+
+.light-theme .light-theme-modal button {
+  background: rgba(245, 239, 230, 0.9) !important;
+  border-color: rgba(215, 206, 192, 0.8) !important;
+  color: #2B2824 !important;
+}
+
+.light-theme .light-theme-modal button.bg-indigo-600 {
+  background: #4338ca !important;
+  color: white !important;
+}
+
+/* Print Overrides */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+    overflow: visible !important;
+  }
 }
