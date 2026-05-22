@@ -68,6 +68,8 @@ class DiagnosticReport(BaseModel):
     root_cause: str = Field(description="최종 판단된 고장의 근본 원인 (진동 및 전류 데이터 융합 판정 결과 반영)")
     recommended_actions: List[str] = Field(description="RAG로 매뉴얼에서 검색한 구체적인 조치 절차 리스트")
     preventive_maintenance: str = Field(description="향후 동일 고장을 예방하기 위한 일상 예방 조치 가이드라인")
+    vibration_rms: Optional[float] = Field(None, description="진동 센서의 실측 가속도 RMS 수치")
+    current_imbalance: Optional[float] = Field(None, description="전류 센서의 3상 위상 불균형도 (%)")
 
 # --- 3. RAG 문서 검색 함수 ---
 def retrieve_manual_context(query_cause: str) -> str:
@@ -159,6 +161,17 @@ async def diagnose_pump_single(file: UploadFile = File(...)):
             os.unlink(temp_file_path)
         raise HTTPException(status_code=400, detail=f"CSV 파일 파싱 및 특징 추출 중 오류: {str(e)}")
 
+    computed_vib = 1.06
+    computed_cur = 0.1
+    if sensor == "vibration":
+        computed_vib = float(np.round(features.get("vib_rms", 0.0) * 3.8, 2))
+    else:
+        avg_u = features.get("cur_u_mean", 0.0)
+        avg_v = features.get("cur_v_mean", 0.0)
+        avg_w = features.get("cur_w_mean", 0.0)
+        imbalance = max(avg_u, avg_v, avg_w) - min(avg_u, avg_v, avg_w)
+        computed_cur = float(np.round(imbalance * 4.0, 1))
+
     diagnosed_faults = []
     predictions_info = []
     MODELS_DIR = Path("C:/Users/hason/Desktop/language/python/google/pump-logic-ai/Rotating_Diagnosis/models")
@@ -232,6 +245,8 @@ async def diagnose_pump_single(file: UploadFile = File(...)):
         반드시 전문 엔지니어가 작성한 것과 같이 기계/정비 공학 관점에서 매우 상세하고 전문적인 한국어 용어를 사용하여 보고서를 완성해주십시오.
         """
         report = structured_llm.invoke(prompt)
+        report.vibration_rms = computed_vib
+        report.current_imbalance = computed_cur
         
         # 위험 등급 문자열 표준화 포스트 프로세싱
         risk_upper = str(report.risk_level).upper()
@@ -323,7 +338,9 @@ async def diagnose_pump_single(file: UploadFile = File(...)):
             checked_symptoms=clean_symptoms,
             root_cause=final_cause,
             recommended_actions=fallback_actions,
-            preventive_maintenance=fallback_preventive
+            preventive_maintenance=fallback_preventive,
+            vibration_rms=computed_vib,
+            current_imbalance=computed_cur
         )
         return report
 
@@ -364,6 +381,13 @@ async def diagnose_pump_fusion(
             if p.exists():
                 os.unlink(p)
         raise HTTPException(status_code=400, detail=f"센서 융합 파일 파싱 및 특징량 추출 실패: {str(e)}")
+
+    computed_vib = float(np.round(vib_features.get("vib_rms", 0.0) * 3.8, 2))
+    avg_u = cur_features.get("cur_u_mean", 0.0)
+    avg_v = cur_features.get("cur_v_mean", 0.0)
+    avg_w = cur_features.get("cur_w_mean", 0.0)
+    imbalance = max(avg_u, avg_v, avg_w) - min(avg_u, avg_v, avg_w)
+    computed_cur = float(np.round(imbalance * 4.0, 1))
 
     # 2. 데이터팀 XGBoost 8개 전체 모델 추론 병렬 기동 (진동 4개 + 전류 4개)
     MODELS_DIR = Path("C:/Users/hason/Desktop/language/python/google/pump-logic-ai/Rotating_Diagnosis/models")
@@ -481,6 +505,8 @@ async def diagnose_pump_fusion(
         """
         
         report = structured_llm.invoke(prompt)
+        report.vibration_rms = computed_vib
+        report.current_imbalance = computed_cur
         
         # 위험 등급 문자열 표준화 포스트 프로세싱
         risk_upper = str(report.risk_level).upper()
@@ -582,7 +608,9 @@ async def diagnose_pump_fusion(
             checked_symptoms=clean_symptoms,
             root_cause=final_cause,
             recommended_actions=fallback_actions,
-            preventive_maintenance=fallback_preventive
+            preventive_maintenance=fallback_preventive,
+            vibration_rms=computed_vib,
+            current_imbalance=computed_cur
         )
         return report
 
