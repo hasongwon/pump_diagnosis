@@ -48,32 +48,42 @@ export default function WorkOrderModal({ workOrderOpen, setWorkOrderOpen, analys
 
   const isCauseActive = (row) => {
     if (!analysisResult) return false;
-    const rc = (analysisResult.root_cause || "").toLowerCase().replace(/\s+/g, '');
-    const cleanCause = row.cause.toLowerCase().replace(/\s+/g, '');
+    
+    // 1) 명시적 결함 목록(vib_faults, cur_faults) 활용
+    const explicitFaults = [...(analysisResult.vib_faults || []), ...(analysisResult.cur_faults || [])];
+    const cleanCause = row.cause.replace(/\s+/g, '');
     const cleanCauseEn = (row.causeEn || "").toLowerCase().replace(/\s+/g, '');
 
-    // 1) root_cause 텍스트 기반 매칭
-    if (rc.includes("alignment") || rc.includes("misalignment") || rc.includes("축정렬") || rc.includes("축중심") || rc.includes("조립설치")) {
-      if (cleanCause.includes("축중심") || cleanCause.includes("조립설치") || cleanCauseEn.includes("alignment") || cleanCauseEn.includes("misalignment")) return true;
+    if (explicitFaults.length > 0) {
+      for (const fault of explicitFaults) {
+        const cleanFault = fault.replace(/\s+/g, '');
+        if (cleanCause.includes(cleanFault) || cleanFault.includes(cleanCause)) return true;
+        // 회전체불평형 <-> 회전체 불평형 예외 처리
+        if (cleanFault.includes("회전체") && cleanCause.includes("회전체")) return true;
+        if (cleanFault.includes("축정렬") && (cleanCause.includes("조립설치") || cleanCause.includes("축중심"))) return true;
+        if (cleanFault.includes("베어링") && (cleanCause.includes("베어링") || cleanCause.includes("윤활유"))) return true;
+        if (cleanFault.includes("벨트") && cleanCause.includes("벨트")) return true;
+      }
     }
-    if (rc.includes("bearing") || rc.includes("grease") || rc.includes("베어링") || rc.includes("윤활유") || rc.includes("베어링장치")) {
-      if (cleanCause.includes("베어링") || cleanCause.includes("윤활유") || cleanCauseEn.includes("bearing") || cleanCauseEn.includes("grease")) return true;
+
+    // 2) Fallback: root_cause가 매우 짧은 단답형(15자 이내)일 경우에만 매칭 (LLM 환각 방지)
+    const rcRaw = analysisResult.root_cause || "";
+    if (rcRaw.length > 0 && rcRaw.length <= 25) {
+      const rc = rcRaw.toLowerCase().replace(/\s+/g, '');
+      if (rc.includes("alignment") || rc.includes("misalignment") || rc.includes("축정렬") || rc.includes("축중심") || rc.includes("조립설치")) {
+        if (cleanCause.includes("축중심") || cleanCause.includes("조립설치") || cleanCauseEn.includes("alignment") || cleanCauseEn.includes("misalignment")) return true;
+      }
+      if (rc.includes("bearing") || rc.includes("grease") || rc.includes("베어링") || rc.includes("윤활유") || rc.includes("베어링장치")) {
+        if (cleanCause.includes("베어링") || cleanCause.includes("윤활유") || cleanCauseEn.includes("bearing") || cleanCauseEn.includes("grease")) return true;
+      }
+      if (rc.includes("unbalance") || rc.includes("imbalance") || rc.includes("회전체불평형")) {
+        if (cleanCause.includes("회전체불평형") || cleanCauseEn.includes("unbalance") || cleanCauseEn.includes("imbalance")) return true;
+      }
+      if (rc.includes("belt") || rc.includes("slack") || rc.includes("벨트")) {
+        if (cleanCause.includes("벨트") || cleanCauseEn.includes("belt") || cleanCauseEn.includes("slack")) return true;
+      }
+      if (rc.includes(cleanCause) || cleanCause.includes(rc)) return true;
     }
-    if (rc.includes("unbalance") || rc.includes("imbalance") || rc.includes("회전체불평형")) {
-      if (cleanCause.includes("회전체불평형") || cleanCauseEn.includes("unbalance") || cleanCauseEn.includes("imbalance")) return true;
-    }
-    if (rc.includes("belt") || rc.includes("slack") || rc.includes("벨트")) {
-      if (cleanCause.includes("벨트") || cleanCauseEn.includes("belt") || cleanCauseEn.includes("slack")) return true;
-    }
-    // 진동 단독 이상 → 회전체 불평형 계열 행 강조
-    if (rc.includes("진동단독") || rc.includes("이상진동") || rc.includes("vibrationonly") || rc.includes("vibrationanomaly")) {
-      if (cleanCause.includes("회전체") || cleanCause.includes("불평형") || cleanCauseEn.includes("unbalance") || cleanCauseEn.includes("vibration")) return true;
-    }
-    // 전류 단독 이상 → 과부하·전압 계열 행 강조
-    if (rc.includes("전류단독") || rc.includes("mcsa") || rc.includes("currentonly") || rc.includes("currentimbalance")) {
-      if (cleanCause.includes("과부하") || cleanCause.includes("전압") || cleanCause.includes("전기품") || cleanCauseEn.includes("overload") || cleanCauseEn.includes("voltage") || cleanCauseEn.includes("motor")) return true;
-    }
-    if (rc.includes(cleanCause) || cleanCause.includes(rc) || rc.includes(cleanCauseEn) || cleanCauseEn.includes(rc)) return true;
 
     return false;
   };
