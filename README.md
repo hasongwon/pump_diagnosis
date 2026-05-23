@@ -1,4 +1,4 @@
-# Pump Diagnosis — 원심펌프 다중 센서 융합 진단 시스템
+# Pump Diagnosis — 원심펌프 이종센서 융합 진단 시스템
 
 원심펌프의 **진동(Vibration)** 과 **전류(Current)** 센서 CSV 를 업로드하면,
 XGBoost 모델 8개 + RAG 매뉴얼 검색 + Gemini LLM 을 결합해
