@@ -76,34 +76,11 @@ export default function DetailView({ analysisResult, setWorkOrderOpen, t, lang }
           <Activity className="mr-2 text-cyan-400" size={15} /> 
           <span>{t.detail.keypoints}</span>
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Keypoint 1: Risk Level */}
-          <div className="bg-slate-950/60 p-4 rounded-2xl border border-slate-900 shadow-inner flex flex-col justify-between h-auto">
-            <p className="text-[10px] text-slate-500 font-mono font-bold tracking-wider mb-2">{t.detail.riskLevel}</p>
-            <span className={`${riskBadgeClass} border font-black px-2.5 py-1.5 rounded-xl text-center text-[10px] ${isDanger ? 'animate-pulse' : ''} inline-block w-full`}>
-              {riskTitle}
-            </span>
-          </div>
-          {/* Keypoint 2: Root Cause */}
+        <div className="grid grid-cols-1 gap-4">
+          {/* Keypoint 1: Root Cause */}
           <div className="bg-slate-950/60 p-4 rounded-2xl border border-slate-900 shadow-inner flex flex-col justify-between h-auto">
             <p className="text-[10px] text-slate-500 font-mono font-bold tracking-wider mb-2">{t.diagnostics.diagnosedCause}</p>
-            <p className="text-xs font-extrabold text-slate-100 break-words leading-relaxed">{rootCause}</p>
-          </div>
-          {/* Keypoint 3: Confidence / Reliability */}
-          <div className="bg-slate-950/60 p-4 rounded-2xl border border-slate-900 shadow-inner flex flex-col justify-between h-auto">
-            <p className="text-[10px] text-slate-500 font-mono font-bold tracking-wider mb-2">{t.detail.confidence}</p>
-            <div className="flex items-center justify-between">
-              <span className="text-base font-black text-rose-400 glow-rose">96.4%</span>
-              <span className="text-[10px] font-black text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded bg-emerald-500/10">EXCELLENT</span>
-            </div>
-          </div>
-          {/* Keypoint 4: Model Version & Info */}
-          <div className="bg-slate-950/60 p-4 rounded-2xl border border-slate-900 shadow-inner flex flex-col justify-between h-auto">
-            <p className="text-[10px] text-slate-500 font-mono font-bold tracking-wider mb-2">{t.detail.modelVer}</p>
-            <div>
-              <p className="text-xs font-mono font-black text-slate-300">FUSION-V2.0</p>
-              <p className="text-[9px] text-slate-500 mt-1 font-mono">PdM RAG Active</p>
-            </div>
+            <p className="text-sm font-extrabold text-slate-100 break-words leading-relaxed">{rootCause}</p>
           </div>
         </div>
       </div>

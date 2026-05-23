@@ -9,7 +9,7 @@ export default function Chatbot({ chatbotOpen, setChatbotOpen, t, analysisResult
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
   const [showKeyText, setShowKeyText] = useState(false);
   
-  const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
 
   // Initialize with localized welcome message when t changes
   useEffect(() => {
@@ -23,7 +23,12 @@ export default function Chatbot({ chatbotOpen, setChatbotOpen, t, analysisResult
   }, [t]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   }, [messages, isTyping]);
 
   const handleSendMessage = () => {
@@ -117,7 +122,7 @@ When asked greetings or common chit-chat (e.g. "안녕", "안녕하세요", "반
         if (isGreeting) {
           botResponse = isEnglish
             ? "Hello! I am your Centrifugal Pump Predictive Maintenance AI Assistant. 🤖 Please feel free to ask about pump diagnostic status, root cause analysis, issuing maintenance work orders, QR code video tutorials, or standard operating manuals!"
-            : "안녕하세요! 원심펌프 예지보전 AI 비서입니다. 🤖 현재 기기 진단 상태, 이상 원인 분석, 점검 지시서 발행, QR 가이드 또는 유튜브 정비 가이드 등에 대해 궁금한 점을 질문해 주세요!";
+            : "안녕하세요! 원심펌프 예지보전 AI 비서입니다. 🤖 현재 기기 진단 상태, 이상 원인 분석, 정비 작업 지시서 발행, QR 가이드 또는 유튜브 정비 가이드 등에 대해 궁금한 점을 질문해 주세요!";
         } else if (query.includes('진동') || query.includes('진폭') || query.includes('흔들') || (isEnglish && (query.includes('vib') || query.includes('amplitude') || query.includes('shak') || query.includes('vibration')))) {
           if (analysisResult) {
             botResponse = isEnglish
@@ -141,11 +146,11 @@ When asked greetings or common chit-chat (e.g. "안녕", "안녕하세요", "반
         } else if (query.includes('유튜브') || query.includes('동영상') || query.includes('큐알') || query.includes('qr') || (isEnglish && (query.includes('qr') || query.includes('video') || query.includes('youtube')))) {
           botResponse = isEnglish
             ? "Standard video tutorials matching this diagnostic anomaly are available via the high-resolution QR code inside the [Maintenance Work Order] modal at the top right."
-            : "현재 진단된 결함에 수반되는 맞춤 정비 동영상 가이드는 [점검 지시서 발행]을 클릭하셨을 때 모달 내부 우측 상단에 고해상도 QR 코드로 인쇄되어 즉각 연결됩니다. (축정렬 수리 영상 주소: https://www.youtube.com/watch?v=kU_3zSCSz0o)";
+            : "현재 진단된 결함에 수반되는 맞춤 정비 동영상 가이드는 [정비 작업 지시서 발행]을 클릭하셨을 때 모달 내부 우측 상단에 고해상도 QR 코드로 인쇄되어 즉각 연결됩니다. (축정렬 수리 영상 주소: https://www.youtube.com/watch?v=kU_3zSCSz0o)";
         } else if (query.includes('지시서') || query.includes('점검') || query.includes('wo') || query.includes('order') || query.includes('work')) {
           botResponse = isEnglish
             ? "You can print the Maintenance Work Order by clicking the [Issue Maintenance Work Order] button at the top right of the dashboard or details page. It is prefilled with diagnosed parameters."
-            : "대시보드 또는 상세소견 페이지 우측 상단의 [점검 지시서 발행] 버튼을 클릭하시면 실시간 AI 진단 파라미터가 자동으로 채워진 표준 점검 지시서(PDF/인쇄용)가 팝업되어 정비 현장에서 즉시 활용할 수 있습니다.";
+            : "대시보드 또는 상세소견 페이지 우측 상단의 [정비 작업 지시서 발행] 버튼을 클릭하시면 실시간 AI 진단 파라미터가 자동으로 채워진 표준 정비 작업 지시서(PDF/인쇄용)가 팝업되어 정비 현장에서 즉시 활용할 수 있습니다.";
         } else if (query.includes('매뉴얼') || query.includes('지침') || query.includes('manual') || query.includes('guide')) {
           botResponse = isEnglish
             ? "You can view complete Centrifugal Pump standard operating procedures, failure code matrices, and safety guides on the 'Manuals & Guides' menu from the sidebar."
@@ -156,7 +161,7 @@ When asked greetings or common chit-chat (e.g. "안녕", "안녕하세요", "반
             if (isDanger) {
               botResponse = isEnglish
                 ? `Diagnostic Status: [${analysisResult.risk_level}] - ${analysisResult.root_cause}. Analysis: ${analysisResult.risk_rationale} We highly recommend issuing a [Maintenance Order] and performing: ${analysisResult.recommended_actions?.join(' | ') || 'Inspection'}.`
-                : `설비 진단 상태: [${analysisResult.risk_level}] - ${analysisResult.root_cause} 결함이 감지되었습니다. 상세 분석: ${analysisResult.risk_rationale} 우측 상단의 [점검 지시서 발행]을 눌러 점검 정비 조치(${analysisResult.recommended_actions?.[0] || '정밀 점검'})를 긴급 가동하시기 바랍니다.`;
+                : `설비 진단 상태: [${analysisResult.risk_level}] - ${analysisResult.root_cause} 결함이 감지되었습니다. 상세 분석: ${analysisResult.risk_rationale} 우측 상단의 [정비 작업 지시서 발행]을 눌러 점검 정비 조치(${analysisResult.recommended_actions?.[0] || '정밀 점검'})를 긴급 가동하시기 바랍니다.`;
             } else {
               botResponse = isEnglish
                 ? `Diagnostic Status: [NORMAL] - ${analysisResult.root_cause}. The vibration (${analysisResult.vibration_rms} mm/s) and current imbalance (${analysisResult.current_imbalance}%) levels are normal. Routine monitoring is recommended.`
@@ -261,7 +266,10 @@ When asked greetings or common chit-chat (e.g. "안녕", "안녕하세요", "반
       )}
 
       {/* Messages View */}
-      <div className="p-4 h-72 overflow-y-auto bg-slate-950/40 flex flex-col space-y-4 text-xs">
+      <div 
+        ref={chatContainerRef}
+        className="p-4 h-72 overflow-y-auto bg-slate-950/40 flex flex-col space-y-4 text-xs"
+      >
         {messages.map((msg, idx) => (
           <div 
             key={idx} 
@@ -292,7 +300,6 @@ When asked greetings or common chit-chat (e.g. "안녕", "안녕하세요", "반
             </div>
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Engine Status Tag */}

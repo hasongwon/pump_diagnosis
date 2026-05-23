@@ -26,6 +26,14 @@ if env_path.exists():
 if not os.environ.get("GOOGLE_API_KEY"):
     print("[⚠️ 경고] GOOGLE_API_KEY 환경 변수가 설정되지 않았습니다. 로컬 .env 파일 또는 시스템 환경 변수를 확인하십시오.")
 
+# --- 0. 다중 환경(로컬/Docker) 모델 경로 동적 바인딩 ---
+def get_models_dir() -> Path:
+    models_dir = Path(os.environ.get("MODELS_DIR", Path(__file__).parent / "models"))
+    if not models_dir.exists():
+        # Fallback to local machine absolute path
+        models_dir = Path("C:/Users/hason/Desktop/language/python/google/pump-logic-ai/Rotating_Diagnosis/models")
+    return models_dir
+
 app = FastAPI(title="Pump Diagnosis RAG Backend")
 
 # React 프론트엔드 포트에서의 접근 허용
@@ -173,7 +181,7 @@ async def diagnose_pump(file: UploadFile = File(...)):
     # 2. 데이터팀 XGBoost 모델 로드 및 추론 수행
     diagnosed_faults = []
     predictions_info = []
-    MODELS_DIR = Path("C:/Users/hason/Desktop/language/python/google/pump-logic-ai/Rotating_Diagnosis/models")
+    MODELS_DIR = get_models_dir()
     
     try:
         for task in ["축정렬불량", "회전체불평형", "베어링불량", "벨트느슨함"]:

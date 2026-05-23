@@ -10,7 +10,8 @@ export default function UploadView({
   previewCurRows, setPreviewCurRows,
   handleFileUpload, startAnalysis, defaultPreviewData,
   analysisMode, setAnalysisMode,
-  t
+  t,
+  lang
 }) {
   const fileInputRef = useRef(null);
   const vibInputRef = useRef(null);
@@ -197,44 +198,104 @@ export default function UploadView({
       )}
 
       {/* Preview Area (Only shown when files are uploaded to prevent confusion) */}
-      {((analysisMode === 'single' && previewRows.length > 0) || 
-        (analysisMode === 'fusion' && (previewVibRows.length > 0 || previewCurRows.length > 0))) && (
-        <div className="glass-panel rounded-3xl overflow-hidden shadow-2xl animate-fade-in">
-          <div className="px-5 py-4 border-b border-slate-900 bg-slate-950/40 flex justify-between items-center">
-            <h3 className="font-extrabold text-slate-200 flex items-center text-xs tracking-wide">
-              <BarChart2 size={15} className="mr-2 text-cyan-400" /> 
-              <span>{t.upload.previewTitle}</span>
-            </h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left">
-              <thead className="text-[9px] text-slate-400 uppercase bg-slate-950/70 border-b border-slate-900 font-mono tracking-wider">
-                <tr>
-                  {Object.keys(
-                    analysisMode === 'single' 
-                      ? previewRows[0] 
-                      : (previewVibRows[0] || previewCurRows[0])
-                  ).map((key) => (
-                    <th key={key} className="px-6 py-3 border-r border-slate-900/60">{key}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {(
-                  analysisMode === 'single' 
-                    ? previewRows 
-                    : (previewVibRows.length ? previewVibRows : previewCurRows)
-                ).map((row, i) => (
-                  <tr key={i} className="border-b border-slate-900/40 hover:bg-slate-900/20 transition-colors font-mono text-slate-300 text-[11px]">
-                    {Object.values(row).map((val, j) => (
-                      <td key={j} className="px-6 py-2.5 whitespace-nowrap border-r border-slate-900/40">{val}</td>
+      {analysisMode === 'single' ? (
+        previewRows.length > 0 && (
+          <div className="glass-panel rounded-3xl overflow-hidden shadow-2xl animate-fade-in">
+            <div className="px-5 py-4 border-b border-slate-900 bg-slate-950/40 flex justify-between items-center">
+              <h3 className="font-extrabold text-slate-200 flex items-center text-xs tracking-wide">
+                <BarChart2 size={15} className="mr-2 text-cyan-400" /> 
+                <span>{t.upload.previewTitle}</span>
+              </h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="text-[9px] text-slate-400 uppercase bg-slate-950/70 border-b border-slate-900 font-mono tracking-wider">
+                  <tr>
+                    {Object.keys(previewRows[0] || {}).map((key) => (
+                      <th key={key} className="px-6 py-3 border-r border-slate-900/60">{key}</th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {previewRows.map((row, i) => (
+                    <tr key={i} className="border-b border-slate-900/40 hover:bg-slate-900/20 transition-colors font-mono text-slate-300 text-[11px]">
+                      {Object.values(row).map((val, j) => (
+                        <td key={j} className="px-6 py-2.5 whitespace-nowrap border-r border-slate-900/40">{val}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )
+      ) : (
+        /* Dual/Fusion Mode: Show Vibration & Current separately */
+        (previewVibRows.length > 0 || previewCurRows.length > 0) && (
+          <div className="space-y-6 animate-fade-in">
+            {previewVibRows.length > 0 && (
+              <div className="glass-panel rounded-3xl overflow-hidden shadow-2xl">
+                <div className="px-5 py-4 border-b border-slate-900 bg-slate-950/40 flex justify-between items-center">
+                  <h3 className="font-extrabold text-slate-200 flex items-center text-xs tracking-wide">
+                    <Activity size={15} className="mr-2 text-cyan-400" /> 
+                    <span>{t.upload.vibTitle} {lang === 'ko' ? '데이터 프리뷰 (상위 5개 행)' : 'Data Preview (Top 5 rows)'}</span>
+                  </h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead className="text-[9px] text-slate-400 uppercase bg-slate-950/70 border-b border-slate-900 font-mono tracking-wider">
+                      <tr>
+                        {Object.keys(previewVibRows[0] || {}).map((key) => (
+                          <th key={key} className="px-6 py-3 border-r border-slate-900/60">{key}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewVibRows.map((row, i) => (
+                        <tr key={i} className="border-b border-slate-900/40 hover:bg-slate-900/20 transition-colors font-mono text-slate-300 text-[11px]">
+                          {Object.values(row).map((val, j) => (
+                            <td key={j} className="px-6 py-2.5 whitespace-nowrap border-r border-slate-900/40">{val}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {previewCurRows.length > 0 && (
+              <div className="glass-panel rounded-3xl overflow-hidden shadow-2xl">
+                <div className="px-5 py-4 border-b border-slate-900 bg-slate-950/40 flex justify-between items-center">
+                  <h3 className="font-extrabold text-slate-200 flex items-center text-xs tracking-wide">
+                    <Zap size={15} className="mr-2 text-purple-400" /> 
+                    <span>{t.upload.curTitle} {lang === 'ko' ? '데이터 프리뷰 (상위 5개 행)' : 'Data Preview (Top 5 rows)'}</span>
+                  </h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead className="text-[9px] text-slate-400 uppercase bg-slate-950/70 border-b border-slate-900 font-mono tracking-wider">
+                      <tr>
+                        {Object.keys(previewCurRows[0] || {}).map((key) => (
+                          <th key={key} className="px-6 py-3 border-r border-slate-900/60">{key}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewCurRows.map((row, i) => (
+                        <tr key={i} className="border-b border-slate-900/40 hover:bg-slate-900/20 transition-colors font-mono text-slate-300 text-[11px]">
+                          {Object.values(row).map((val, j) => (
+                            <td key={j} className="px-6 py-2.5 whitespace-nowrap border-r border-slate-900/40">{val}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )
       )}
 
       <div className="flex justify-end pt-2">

@@ -52,8 +52,8 @@ export default function AlimTalkPopup({ alimtalkOpen, setAlimtalkOpen, analysisR
             <div>
               • <strong className="text-slate-900">{isEnglish ? "Anomalies:" : "이상징후:"}</strong>{" "}
               {isEnglish 
-                ? "Z-axis RMS amplitude 14.22 mm/s (exceeds 56%), MCSA 3-phase current imbalance correlated confirmation."
-                : "Z-축 진폭 14.22 mm/s (임계치 56% 초과), MCSA 3상 전류 불평형 지수 급상승 교차 확진"}
+                ? `Vibration RMS ${analysisResult?.vibration_rms?.toFixed(2) || '2.15'} mm/s, Current Imbalance ${analysisResult?.current_imbalance?.toFixed(1) || '4.0'}%`
+                : `진동 RMS ${analysisResult?.vibration_rms?.toFixed(2) || '2.15'} mm/s, 전류 불평형 ${analysisResult?.current_imbalance?.toFixed(1) || '4.0'}%`}
             </div>
           </div>
 

@@ -72,7 +72,7 @@ export const locales = {
     diagnostics: {
       summaryTitle: "설비 위험 지수 판정",
       diagnosedCause: "진단된 주 원인",
-      diagnoseWorkOrderBtn: "점검 지시서 발행",
+      diagnoseWorkOrderBtn: "정비 작업 지시서 발행",
       detailedReportBtn: "상세 분석 보고서",
       telemetryTitle: "실시간 이중 센서 데이터 모니터링 (텔레메트리 파형)",
       vibration: "진동",

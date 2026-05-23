@@ -11,8 +11,8 @@ export default function WorkOrderModal({ workOrderOpen, setWorkOrderOpen, analys
   const riskLevel = analysisResult?.risk_level || "DANGER";
   const riskRationale = analysisResult?.risk_rationale || (
     isEn 
-      ? "Z-axis acceleration amplitude exceeded threshold by 56%, and abnormal impeller torque load distortion was detected in the 3-phase high-frequency current analysis model. Strong agreement rate (86%) of both sensors confirms shaft misalignment. Immediate maintenance required."
-      : "Z축 가속도 성분 진폭이 임계치 대비 56% 초과하였으며, U/V/W 3상 고주파 전류 분석 모형에서도 비정상 임펠러 토크 부하 왜곡 변동이 검출되었습니다. 두 센서의 동시 분류 결과가 축정렬불량(확률 86%)을 상호 강력하게 뒷받침하고 있습니다. 즉각 정비가 요구됩니다."
+      ? `Analysis complete. Vibration RMS: ${analysisResult?.vibration_rms?.toFixed(2) || 2.15} mm/s, Current Imbalance: ${analysisResult?.current_imbalance?.toFixed(1) || 4.0}%. Maintenance required.`
+      : `분석 완료. 진동 RMS: ${analysisResult?.vibration_rms?.toFixed(2) || 2.15} mm/s, 전류 불평형: ${analysisResult?.current_imbalance?.toFixed(1) || 4.0}%. 정비가 요구됩니다.`
   );
   
   const recommendedActions = analysisResult?.recommended_actions || (
@@ -28,10 +28,7 @@ export default function WorkOrderModal({ workOrderOpen, setWorkOrderOpen, analys
   );
 
   const isSymptomActive = (symptom) => {
-    if (!analysisResult || !analysisResult.checked_symptoms) {
-      const checkArr = ["이상진동", "베어링과열", "과부하", "abnormal vibration", "bearing overheating", "overload"];
-      return checkArr.includes(symptom.label.toLowerCase()) || checkArr.includes((symptom.labelEn || "").toLowerCase());
-    }
+    if (!analysisResult || !analysisResult.checked_symptoms) return false;
     return analysisResult.checked_symptoms.some(s => {
       const cleanS = s.toLowerCase().replace(/\s+/g, '');
       const cleanLabel = symptom.label.toLowerCase().replace(/\s+/g, '');
@@ -78,11 +75,7 @@ export default function WorkOrderModal({ workOrderOpen, setWorkOrderOpen, analys
     }
     if (rc.includes(cleanCause) || cleanCause.includes(rc) || rc.includes(cleanCauseEn) || cleanCauseEn.includes(rc)) return true;
 
-    // 2) checked_symptoms 기반: 이 행의 cell에 active 증상이 하나라도 있으면 행 활성화
-    return Object.keys(row.cells).some(symptomKey => {
-      const symptomDef = SYMPTOMS.find(s => s.key === symptomKey);
-      return symptomDef && isSymptomActive(symptomDef);
-    });
+    return false;
   };
 
   const printableRows = FAULT_MATRIX_DATA;
@@ -176,7 +169,7 @@ export default function WorkOrderModal({ workOrderOpen, setWorkOrderOpen, analys
             <p className="font-extrabold text-slate-900 text-xs mb-2">
               {isEn ? "[Primary Fault Cause]: " : "[주요 결함 원인]: "}<span className="text-rose-600 font-black underline">{rootCause}</span>
             </p>
-            <p className="text-slate-700 leading-relaxed font-sans">
+            <p className="text-slate-700 leading-relaxed font-sans whitespace-pre-wrap break-keep text-justify">
               {riskRationale}
             </p>
           </div>
@@ -284,13 +277,32 @@ export default function WorkOrderModal({ workOrderOpen, setWorkOrderOpen, analys
           <div className="border border-slate-300 rounded-xl p-5 mb-8 bg-slate-50/50">
             <ul className="space-y-3 text-[10.5px] text-slate-700 list-decimal list-inside leading-relaxed font-sans">
               {recommendedActions.map((act, index) => {
-                const parts = act.split(":");
-                return (
-                  <li key={index} className="pl-1">
-                    <strong className="text-slate-900">{parts[0]}:</strong>
-                    <span>{parts[1] || ""}</span>
-                  </li>
-                );
+                // If there is a colon, split by first colon to show bold header
+                const colonIndex = act.indexOf(":");
+                if (colonIndex !== -1) {
+                  const title = act.substring(0, colonIndex).trim();
+                  let content = act.substring(colonIndex + 1).trim();
+                  // Remove any trailing colons from content
+                  if (content.endsWith(":")) {
+                    content = content.slice(0, -1).trim();
+                  }
+                  return (
+                    <li key={index} className="pl-1 whitespace-pre-wrap break-keep">
+                      <strong className="text-slate-900">{title}:</strong>
+                      <span> {content}</span>
+                    </li>
+                  );
+                } else {
+                  let content = act.trim();
+                  if (content.endsWith(":")) {
+                    content = content.slice(0, -1).trim();
+                  }
+                  return (
+                    <li key={index} className="pl-1 whitespace-pre-wrap break-keep text-slate-700 font-medium">
+                      <span>{content}</span>
+                    </li>
+                  );
+                }
               })}
             </ul>
             <div className="mt-3 text-[9px] text-indigo-900 bg-indigo-50 border border-indigo-200 rounded-xl p-3 flex items-start space-x-2 font-medium">
@@ -306,7 +318,7 @@ export default function WorkOrderModal({ workOrderOpen, setWorkOrderOpen, analys
           <h3 className="text-xs font-black border-l-3 border-indigo-600 pl-2 text-slate-950 mb-2.5 uppercase tracking-wide">
             {t.workorder.preventiveCareTitle}
           </h3>
-          <div className="bg-slate-50 border border-slate-300 rounded-xl p-4 text-[10px] text-slate-600 leading-relaxed mb-12">
+          <div className="bg-slate-50 border border-slate-300 rounded-xl p-4 text-[10px] text-slate-600 leading-relaxed mb-12 whitespace-pre-wrap break-keep text-justify">
             {analysisResult?.preventive_maintenance || (
               isEn 
                 ? "Perform periodic quantitative inspections of automatic lubrication intervals and motor drive belt tension. In addition, shorten the real-time 3-phase current imbalance monitoring interval to elevate initial anomaly detection sensitivity."

@@ -294,7 +294,9 @@ export function generateReportsForDay(date, isEn) {
   const dayTemplates = shuffleForDay(REPORT_TEMPLATES, date);
 
   return dayTemplates.map((tmpl, idx) => {
-    const hh      = String(tmpl.hour).padStart(2, '0');
+    // 3시간 간격 8분할 (24시, 21시, 18시, 15시, 12시, 09시, 06시, 03시)
+    const hour    = 24 - idx * 3;
+    const hh      = String(hour).padStart(2, '0');
     const dateStr = `${yyyy}.${mm}.${dd} ${hh}:00 KST`;
     const idStr   = `${tmpl.prefix}-${yyyy}-${mm}-${dd}-${String(idx + 1).padStart(3, '0')}`;
 
@@ -321,8 +323,8 @@ export function generateReportsForDay(date, isEn) {
         : tmpl.statusType === 'WARNING'
           ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
           : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
-      timelineStart: `0${tmpl.hour - 3 < 10 ? '' : ''}${tmpl.hour - 3}:00 KST`,
-      timelineEnd:   `${String(tmpl.hour).padStart(2,'0')}:00 KST`,
+      timelineStart: `${String(hour - 3).padStart(2, '0')}:00 KST`,
+      timelineEnd:   `${String(hour).padStart(2, '0')}:00 KST`,
       ...C,
     };
   });

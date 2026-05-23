@@ -7,8 +7,8 @@ export default function DiagnosticsView({ setCurrentPage, telemetryData, analysi
   const isDanger = analysisResult ? analysisResult.risk_level === 'DANGER' : true;
   const isWarning = analysisResult ? analysisResult.risk_level === 'WARNING' : false;
   
-  const vibVal = analysisResult && typeof analysisResult.vibration_rms !== 'undefined' ? analysisResult.vibration_rms : (isDanger || isWarning ? 14.22 : 1.85);
-  const curVal = analysisResult && typeof analysisResult.current_imbalance !== 'undefined' ? analysisResult.current_imbalance : (isDanger || isWarning ? 4.8 : 0.15);
+  const vibVal = analysisResult?.vibration_rms ?? (isDanger || isWarning ? 2.15 : 1.85);
+  const curVal = analysisResult?.current_imbalance ?? (isDanger || isWarning ? 4.8 : 0.15);
   const isNormalState = !isDanger && !isWarning;
   
   const riskTitle = lang === 'ko' 
@@ -44,6 +44,39 @@ export default function DiagnosticsView({ setCurrentPage, telemetryData, analysi
     : (lang === 'ko' 
         ? "진동 신호 RMS 폭증 및 전류 불균형 3차 조화 주파수 왜곡율이 동시에 검출되어 고장 가능성이 극대화되었습니다." 
         : "Vibration signal RMS surge and current unbalance 3rd harmonic distortion are simultaneously detected, maximizing fault probability.");
+
+  // 핵심 키워드만 추출 (배너 표시용)
+  const FAULT_KEYWORD_MAP = {
+    '축정렬불량': lang === 'ko' ? '축정렬불량' : 'Misalignment',
+    '회전체불평형': lang === 'ko' ? '회전체불평형' : 'Imbalance',
+    '베어링불량': lang === 'ko' ? '베어링불량' : 'Bearing Fault',
+    '벨트느슨함': lang === 'ko' ? '벨트느슨함' : 'Belt Slack',
+    'misalignment': 'Misalignment',
+    'imbalance': 'Imbalance',
+    'bearing': 'Bearing Fault',
+    'belt': 'Belt Slack',
+  };
+
+  const extractKeywords = (cause) => {
+    if (!cause) return cause;
+    const matched = [];
+    for (const [key, label] of Object.entries(FAULT_KEYWORD_MAP)) {
+      if (cause.toLowerCase().includes(key.toLowerCase()) && !matched.includes(label)) {
+        matched.push(label);
+      }
+    }
+    if (matched.length > 0) return matched.join(' · ');
+    // 매칭 없으면 앞 20자만
+    return cause.length > 22 ? cause.slice(0, 22) + '…' : cause;
+  };
+
+  const rootCauseShort = extractKeywords(rootCause);
+
+  // 어느 센서에서 이상 감지됐는지
+  const vibFaults = analysisResult?.vib_faults || [];
+  const curFaults = analysisResult?.cur_faults || [];
+  const hasVibFault = vibFaults && vibFaults.length > 0;
+  const hasCurFault = curFaults && curFaults.length > 0;
 
   const [matrixFilterActive, setMatrixFilterActive] = useState(false);
   const [hoveredCell, setHoveredCell] = useState(null); // {row, s, cellVal} for interactive tooltips!
@@ -98,11 +131,7 @@ export default function DiagnosticsView({ setCurrentPage, telemetryData, analysi
     }
     if (rc.includes(cleanCause) || cleanCause.includes(rc) || rc.includes(cleanCauseEn) || cleanCauseEn.includes(rc)) return true;
 
-    // 2) checked_symptoms 기반: 이 행의 cell에 active 증상이 하나라도 있으면 행 활성화
-    return Object.keys(row.cells).some(symptomKey => {
-      const symptomDef = SYMPTOMS.find(s => s.key === symptomKey);
-      return symptomDef && isSymptomActive(symptomDef);
-    });
+    return false;
   };
 
   const displayedRows = FAULT_MATRIX_DATA.filter(row => {
@@ -160,8 +189,30 @@ export default function DiagnosticsView({ setCurrentPage, telemetryData, analysi
             <h2 className="text-lg font-black text-white tracking-wide">
               {t.diagnostics.summaryTitle}: <span className={`${riskColorClass} underline decoration-indigo-500/40`}>{riskTitle}</span>
             </h2>
-            <p className="text-slate-400 text-xs mt-1 truncate">
-              {t.diagnostics.diagnosedCause}: <span className="text-slate-200 font-bold font-mono">{rootCause}</span>
+            <p className="text-slate-400 text-xs mt-1 flex flex-wrap items-center gap-2">
+              <span className="text-slate-500 text-[10px] shrink-0">{t.diagnostics.diagnosedCause}:</span>
+              <span className="text-slate-100 font-black font-mono text-[12px] tracking-wide">{rootCauseShort}</span>
+              {/* 센서별 오류 뱃지 */}
+              <span className="flex items-center gap-1.5 ml-1">
+                <span className={`inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-full border ${
+                  hasVibFault
+                    ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300 shadow-[0_0_6px_rgba(6,182,212,0.3)]'
+                    : 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${hasVibFault ? 'bg-cyan-400 animate-pulse' : 'bg-emerald-400'}`} />
+                  {lang === 'ko' ? '진동' : 'VIB'}
+                  {hasVibFault ? (lang === 'ko' ? ' ⚠ 비정상' : ' ⚠ ERR') : (lang === 'ko' ? ' 정상' : ' OK')}
+                </span>
+                <span className={`inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-full border ${
+                  hasCurFault
+                    ? 'bg-purple-500/15 border-purple-500/40 text-purple-300 shadow-[0_0_6px_rgba(168,85,247,0.3)]'
+                    : 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${hasCurFault ? 'bg-purple-400 animate-pulse' : 'bg-emerald-400'}`} />
+                  {lang === 'ko' ? '전류' : 'CUR'}
+                  {hasCurFault ? (lang === 'ko' ? ' ⚠ 비정상' : ' ⚠ ERR') : (lang === 'ko' ? ' 정상' : ' OK')}
+                </span>
+              </span>
             </p>
           </div>
         </div>
@@ -434,8 +485,16 @@ export default function DiagnosticsView({ setCurrentPage, telemetryData, analysi
           <table className="w-full text-[11px] text-slate-300 text-center border-collapse">
             <thead>
               <tr className="bg-slate-950 border-b border-slate-900 text-slate-400 font-black text-[10px]">
-                <th className="px-3 py-4 border-r border-slate-900 text-left min-w-[180px] bg-slate-950/80 font-bold">
-                  {lang === 'en' ? "Fault Category \\ Anomaly Symptom" : "고장 분류 \\ 이상 징후"}
+                <th className="relative border-r border-slate-900 min-w-[180px] bg-slate-950/80 font-bold overflow-hidden p-0 h-14">
+                  <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
+                    <line x1="0" y1="0" x2="100%" y2="100%" stroke="#0f172a" strokeWidth="1" />
+                  </svg>
+                  <div className="absolute top-1.5 right-3 text-[10px]">
+                    {lang === 'en' ? "Anomaly Symptom" : "이상 징후"}
+                  </div>
+                  <div className="absolute bottom-1.5 left-3 text-[10px]">
+                    {lang === 'en' ? "Fault Category" : "고장 분류"}
+                  </div>
                 </th>
                 {SYMPTOMS.map(s => {
                   const active = isSymptomActive(s);

@@ -28,13 +28,21 @@ if env_path.exists():
 if not os.environ.get("GOOGLE_API_KEY"):
     print("[⚠️ 경고] GOOGLE_API_KEY 환경 변수가 설정되지 않았습니다. 로컬 .env 파일 또는 시스템 환경 변수를 확인하십시오.")
 
+# --- 0. 다중 환경(로컬/Docker) 모델 경로 동적 바인딩 ---
+def get_models_dir() -> Path:
+    models_dir = Path(os.environ.get("MODELS_DIR", Path(__file__).parent / "models"))
+    if not models_dir.exists():
+        # Fallback to local machine absolute path
+        models_dir = Path("C:/Users/hason/Desktop/language/python/google/pump-logic-ai/Rotating_Diagnosis/models")
+    return models_dir
+
 app = FastAPI(title="Pump Diagnosis RAG Multi-Sensor Fusion Backend")
 
 # React 프론트엔드 포트에서의 접근 허용
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -70,23 +78,30 @@ class DiagnosticReport(BaseModel):
     preventive_maintenance: str = Field(description="향후 동일 고장을 예방하기 위한 일상 예방 조치 가이드라인")
     vibration_rms: Optional[float] = Field(None, description="진동 센서의 실측 가속도 RMS 수치")
     current_imbalance: Optional[float] = Field(None, description="전류 센서의 3상 위상 불균형도 (%)")
+    vib_faults: Optional[List[str]] = Field(None, description="진동 센서에서 감지된 고장 목록")
+    cur_faults: Optional[List[str]] = Field(None, description="전류 센서에서 감지된 고장 목록")
 
 # --- 3. RAG 문서 검색 함수 ---
 def retrieve_manual_context(query_cause: str) -> str:
-    db_dir = "./chroma_db"
-    if not os.path.exists(db_dir):
-        # 만약 chroma_db가 동일 레벨에 없으면 한단계 위나 절대경로 등도 체크
-        db_dir = "C:/Users/hason/Desktop/language/python/google/backend/chroma_db"
+    try:
+        # __file__ 기준 상대경로 → 로컬 및 Cloud Run(/app/chroma_db) 모두 동작
+        db_dir = str(Path(__file__).parent / "chroma_db")
         if not os.path.exists(db_dir):
             return "유지보수 매뉴얼 데이터베이스가 아직 비어 있습니다."
+            
+        if not os.environ.get("GOOGLE_API_KEY"):
+            return "유지보수 매뉴얼 데이터베이스 검색을 위해 GOOGLE_API_KEY 환경 변수가 필요합니다."
+            
+        embeddings = GoogleGenerativeAIEmbeddings(model="gemini-embedding-001")
+        vector_db = Chroma(persist_directory=db_dir, embedding_function=embeddings)
         
-    embeddings = GoogleGenerativeAIEmbeddings(model="gemini-embedding-001")
-    vector_db = Chroma(persist_directory=db_dir, embedding_function=embeddings)
-    
-    retriever = vector_db.as_retriever(search_kwargs={"k": 3})
-    docs = retriever.invoke(f"{query_cause} 조치 방법 정비 절차 및 예방 방법")
-    
-    return "\n\n".join([doc.page_content for doc in docs])
+        retriever = vector_db.as_retriever(search_kwargs={"k": 3})
+        docs = retriever.invoke(f"{query_cause} 조치 방법 정비 절차 및 예방 방법")
+        
+        return "\n\n".join([doc.page_content for doc in docs])
+    except Exception as e:
+        traceback.print_exc()
+        return f"유지보수 매뉴얼 데이터베이스 검색 실패: {str(e)}"
 
 # --- 4. 데이터팀 특징 추출 알고리즘 ---
 META_LINES = 9
@@ -161,8 +176,8 @@ async def diagnose_pump_single(file: UploadFile = File(...)):
             os.unlink(temp_file_path)
         raise HTTPException(status_code=400, detail=f"CSV 파일 파싱 및 특징 추출 중 오류: {str(e)}")
 
-    computed_vib = 1.06
-    computed_cur = 0.1
+    computed_vib = 0.0
+    computed_cur = 0.0
     if sensor == "vibration":
         computed_vib = float(np.round(features.get("vib_rms", 0.0) * 3.8, 2))
     else:
@@ -174,7 +189,7 @@ async def diagnose_pump_single(file: UploadFile = File(...)):
 
     diagnosed_faults = []
     predictions_info = []
-    MODELS_DIR = Path("C:/Users/hason/Desktop/language/python/google/pump-logic-ai/Rotating_Diagnosis/models")
+    MODELS_DIR = get_models_dir()
     
     try:
         for task in ["축정렬불량", "회전체불평형", "베어링불량", "벨트느슨함"]:
@@ -187,9 +202,11 @@ async def diagnose_pump_single(file: UploadFile = File(...)):
                 X = pd.DataFrame([features])[features_list]
                 prob = float(model.predict_proba(X)[0][1])
                 pred = int(model.predict(X)[0])
+                # 임계값 0.65 적용: 기본 0.5보다 높은 기준으로 거짓 양성 억제
+                high_conf_pred = 1 if prob >= 0.65 else 0
                 
-                predictions_info.append(f"- {task}: 예측 클래스={pred} (고장 가능성 {prob*100:.1f}%)")
-                if pred == 1:
+                predictions_info.append(f"- {task}: 예측 클래스={high_conf_pred} (고장 가능성 {prob*100:.1f}%)")
+                if high_conf_pred == 1:
                     diagnosed_faults.append(task)
             else:
                 predictions_info.append(f"- {task}: 모델 파일 없음")
@@ -390,14 +407,30 @@ async def diagnose_pump_fusion(
     computed_cur = float(np.round(imbalance * 4.0, 1))
 
     # 2. 데이터팀 XGBoost 8개 전체 모델 추론 병렬 기동 (진동 4개 + 전류 4개)
-    MODELS_DIR = Path("C:/Users/hason/Desktop/language/python/google/pump-logic-ai/Rotating_Diagnosis/models")
+    MODELS_DIR = get_models_dir()
     vib_faults = []
     cur_faults = []
     predictions_info = []
     
+    # 물리 기반 사전 필터: RMS/불평형율이 정상 범위 내이면 해당 센서 모델 결과 억제
+    VIB_RMS_THRESHOLD_RAW = 2.5   # mm/s — 진동 정상 판정 임계값 (프론트엔드와 동일)
+    CUR_IMBALANCE_THRESHOLD_RAW = 0.5  # 프론트엔드의 imbalance < 0.5
+    
+    raw_vib_rms = vib_features.get("vib_rms", 0.0)
+    raw_cur_imb = imbalance
+    
+    vib_is_physically_normal = raw_vib_rms < VIB_RMS_THRESHOLD_RAW
+    cur_is_physically_normal = raw_cur_imb < CUR_IMBALANCE_THRESHOLD_RAW
+
     try:
         # 진동 모델 4개 추론
         predictions_info.append("=== 진동(Vibration) 센서 예측 결과 ===")
+        if vib_is_physically_normal:
+            predictions_info.append(f"[물리 필터] 진동 Raw RMS={raw_vib_rms:.2f} < {VIB_RMS_THRESHOLD_RAW} → 진동 모델 결과 무시 (정상 범위)")
+            
+        best_vib_task = None
+        best_vib_prob = 0.0
+        vib_probs = {}
         for task in ["축정렬불량", "회전체불평형", "베어링불량", "벨트느슨함"]:
             model_path = MODELS_DIR / f"vibration__{task}.pkl"
             if model_path.exists():
@@ -407,16 +440,29 @@ async def diagnose_pump_fusion(
                 
                 X = pd.DataFrame([vib_features])[features_list]
                 prob = float(model.predict_proba(X)[0][1])
-                pred = int(model.predict(X)[0])
+                vib_probs[task] = prob
                 
-                predictions_info.append(f"- {task}: 예측 클래스={pred} (고장 가능성 {prob*100:.1f}%)")
-                if pred == 1:
-                    vib_faults.append(task)
+                if prob > best_vib_prob:
+                    best_vib_prob = prob
+                    best_vib_task = task
             else:
                 predictions_info.append(f"- {task}: 모델 파일 없음")
                 
+        # LLM에게 혼란을 주지 않기 위해, 가장 확률이 높은 모델만 1로 표기
+        for task, prob in vib_probs.items():
+            is_best = (task == best_vib_task) and (prob >= 0.65) and not vib_is_physically_normal
+            high_conf_pred = 1 if is_best else 0
+            predictions_info.append(f"- {task}: 예측 클래스={high_conf_pred} (고장 가능성 {prob*100:.1f}%)")
+        
+        if best_vib_task and best_vib_prob >= 0.65 and not vib_is_physically_normal:
+            vib_faults.append(best_vib_task)
+                
         # 전류 모델 4개 추론
         predictions_info.append("\n=== 전류(Current) 센서 예측 결과 ===")
+        if cur_is_physically_normal:
+            predictions_info.append(f"[물리 필터] 전류 불평형율 Raw={raw_cur_imb:.3f} < {CUR_IMBALANCE_THRESHOLD_RAW} → 전류 모델 결과 무시 (정상 범위)")
+        best_cur_task = None
+        best_cur_prob = 0.0
         for task in ["축정렬불량", "회전체불평형", "베어링불량", "벨트느슨함"]:
             model_path = MODELS_DIR / f"current__{task}.pkl"
             if model_path.exists():
@@ -426,13 +472,18 @@ async def diagnose_pump_fusion(
                 
                 X = pd.DataFrame([cur_features])[features_list]
                 prob = float(model.predict_proba(X)[0][1])
-                pred = int(model.predict(X)[0])
                 
-                predictions_info.append(f"- {task}: 예측 클래스={pred} (고장 가능성 {prob*100:.1f}%)")
-                if pred == 1:
-                    cur_faults.append(task)
+                if prob > best_cur_prob:
+                    best_cur_prob = prob
+                    best_cur_task = task
+                    
+                high_conf_pred = 1 if (prob >= 0.65 and not cur_is_physically_normal) else 0
+                predictions_info.append(f"- {task}: 예측 클래스={high_conf_pred} (고장 가능성 {prob*100:.1f}%)")
             else:
                 predictions_info.append(f"- {task}: 모델 파일 없음")
+                
+        if best_cur_task and best_cur_prob >= 0.65 and not cur_is_physically_normal:
+            cur_faults.append(best_cur_task)
                 
     except Exception as e:
         traceback.print_exc()
@@ -507,12 +558,16 @@ async def diagnose_pump_fusion(
         report = structured_llm.invoke(prompt)
         report.vibration_rms = computed_vib
         report.current_imbalance = computed_cur
+        report.vib_faults = vib_faults
+        report.cur_faults = cur_faults
         
-        # 위험 등급 문자열 표준화 포스트 프로세싱
-        risk_upper = str(report.risk_level).upper()
-        if "DANGER" in risk_upper:
+        # ★ 위험 등급: LLM 판단 무시하고 백엔드 XGBoost 필터 결과로 강제 오버라이드
+        # consensus_faults → DANGER (두 센서 모두 이상)
+        # union_faults only → WARNING (한 센서만 이상)
+        # 둘 다 없음 → NORMAL
+        if consensus_faults:
             report.risk_level = "DANGER"
-        elif "WARN" in risk_upper:
+        elif union_faults:
             report.risk_level = "WARNING"
         else:
             report.risk_level = "NORMAL"
@@ -610,7 +665,9 @@ async def diagnose_pump_fusion(
             recommended_actions=fallback_actions,
             preventive_maintenance=fallback_preventive,
             vibration_rms=computed_vib,
-            current_imbalance=computed_cur
+            current_imbalance=computed_cur,
+            vib_faults=vib_faults,
+            cur_faults=cur_faults
         )
         return report
 
@@ -618,3 +675,4 @@ if __name__ == "__main__":
     import uvicorn
     # 8000 포트에서 실행하여 기존 frontend 코드 주소를 그대로 지원
     uvicorn.run(app, host="0.0.0.0", port=8000)
+    
