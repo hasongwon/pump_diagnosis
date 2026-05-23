@@ -6,12 +6,22 @@ XGBoost 모델 8개 + RAG 매뉴얼 검색 + Gemini LLM 을 결합해
 
 ```
 [React UI (Vite)] ──CSV 업로드──▶ [FastAPI Backend]
-   :5173                              :8000
+ (Firebase Hosting)               (Google Cloud Run)
                                        ├─ XGBoost 8 모델 (진동 4 + 전류 4)
                                        ├─ Decision-Level Sensor Fusion
                                        ├─ Chroma 벡터DB (PDF 매뉴얼 RAG)
                                        └─ Gemini 2.5 Flash (구조화 리포트)
 ```
+
+---
+
+## 🌐 라이브 서비스 접속 (Live Deployment)
+
+본 프로젝트는 **Google Cloud Platform (GCP)** 을 활용하여 성공적으로 프로덕션 배포가 완료되었습니다. 로컬 환경 구성 없이 아래 링크에서 즉시 스마트 팩토리 예지보전 AI 진단 시스템을 체험하실 수 있습니다.
+
+*   **FastAPI 백엔드 (Google Cloud Run)**: [https://pump-backend-906796211002.asia-northeast3.run.app](https://pump-backend-906796211002.asia-northeast3.run.app)
+*   **백엔드 API Docs (Swagger)**: [https://pump-backend-906796211002.asia-northeast3.run.app/docs](https://pump-backend-906796211002.asia-northeast3.run.app/docs)
+*   **배포 가이드라인 참조**: [GCP_DEPLOY_GUIDE.md](./GCP_DEPLOY_GUIDE.md) (Cloud Build 및 컨테이너 배포 상세 매뉴얼)
 
 ---
 
