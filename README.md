@@ -1,296 +1,63 @@
 # Pump Diagnosis — 원심펌프 이종센서 융합 진단 시스템
 
-원심펌프의 **진동(Vibration)** 과 **전류(Current)** 센서 CSV 를 업로드하면,
-XGBoost 모델 8개 + RAG 매뉴얼 검색 + Gemini LLM 을 결합해
-**예지보전(PdM) 진단 리포트** 를 생성하는 풀스택 프로젝트.
+원심펌프의 **진동(Vibration)** 과 **전류(Current)** 센서 데이터를 업로드하면,
+XGBoost 모델 8개, RAG 매뉴얼 검색, 그리고 Gemini LLM 을 결합해
+**예지보전(PdM) 진단 리포트**를 생성하는 풀스택 스마트 팩토리 AI 시스템입니다.
 
-```
-[React UI (Vite)] ──CSV 업로드──▶ [FastAPI Backend]
- (Firebase Hosting)               (Google Cloud Run)
-                                       ├─ XGBoost 8 모델 (진동 4 + 전류 4)
-                                       ├─ Decision-Level Sensor Fusion
-                                       ├─ Chroma 벡터DB (PDF 매뉴얼 RAG)
-                                       └─ Gemini 2.5 Flash (구조화 리포트)
-```
+## 🚀 서비스 접속 (Live Deployment)
 
----
+본 프로젝트는 **Google Cloud Platform (GCP)** 인프라(Cloud Run & Firebase Hosting) 상에 성공적으로 배포되어 운영 중입니다. 로컬 환경 구성 등의 번거로운 설치 과정 없이 아래 링크를 통해 즉시 시스템 전체 기능을 라이브로 체험해 보실 수 있습니다.
 
-## 🌐 라이브 서비스 접속 (Live Deployment)
+* **웹 애플리케이션 접속**: [https://pump-diagnosis.web.app](https://pump-diagnosis.web.app)
 
-본 프로젝트는 **Google Cloud Platform (GCP)** 을 활용하여 성공적으로 프로덕션 배포가 완료되었습니다. 로컬 환경 구성 없이 아래 링크에서 즉시 스마트 팩토리 예지보전 AI 진단 시스템을 체험하실 수 있습니다.
-
-*   **FastAPI 백엔드 (Google Cloud Run)**: [https://pump-backend-906796211002.asia-northeast3.run.app](https://pump-backend-906796211002.asia-northeast3.run.app)
-*   **백엔드 API Docs (Swagger)**: [https://pump-backend-906796211002.asia-northeast3.run.app/docs](https://pump-backend-906796211002.asia-northeast3.run.app/docs)
-*   **배포 가이드라인 참조**: [GCP_DEPLOY_GUIDE.md](./GCP_DEPLOY_GUIDE.md) (Cloud Build 및 컨테이너 배포 상세 매뉴얼)
+> **안내**: 클라우드 서버리스 특성상, 일정 시간 접속이 없을 시 서버가 대기(Cold) 상태로 전환됩니다. 최초 진단 분석 시 시스템이 기동하면서 평소보다 약 5~10초 정도 지연이 발생할 수 있습니다.
 
 ---
 
-## 🌟 주요 최신 고도화 기능 (Recent Advanced Features)
+## 🌟 주요 차별화 기능 (Advanced Features)
 
 ### 1. 실시간 클라이언트 사이드 Gemini 1.5 Flash 연동 🤖
-- 챗봇 우측의 톱니바퀴형 설정을 통해 사용자의 **Google Gemini API Key**를 직접 등록할 수 있습니다.
-- 입력된 키는 보안을 위해 브라우저 `localStorage`에만 암호화 저장되며, API Key 활성화 시 현재 화면에 감지된 실시간 펌프 진단 상태(진동 RMS, 전류 불평형율, 이상 부하 징후 등)를 프롬프트에 자동으로 결합하여 **완전 기기 맞춤형 AI 상담 비서**로 기동합니다. (미등록 시 자체 지능형 로컬 규칙 엔진 작동)
-- Regex 기반 정밀 인사말 필터를 내장하여 "안녕하세요" 등의 대화 시작 시 엉뚱한 에러 코드를 응답하지 않고 정갈한 환영 메시지를 표출합니다.
+- 챗봇 우측 상단의 설정 아이콘을 통해 사용자의 **Google Gemini API Key**를 직접 등록할 수 있습니다. 
+- API Key 활성화 시 현재 화면에 감지된 실시간 펌프 진단 상태(진동 RMS, 전류 불평형율, 이상 부하 징후 등)를 프롬프트에 자동으로 결합하여 **완전 기기 맞춤형 AI 상담 비서**로 작동합니다.
+- Regex 기반 정밀 인사말 필터를 통해 "안녕하세요" 등의 대화 시작 시 오류 코드 없이 자연스럽고 부드러운 환영 메시지를 표출합니다.
 
-### 2. 고품격 환경설정 및 실시간 알림 드롭다운 (Bell & Gear) ⚙️🚨
-- **환경 설정 (Settings Gear)**: 상단 헤더에 흩어져 있던 KO/EN 버튼과 테마 아이콘을 기어 아이콘 클릭 시 전조되는 고급 드롭다운으로 수납하여 미니멀한 UI를 완성했습니다.
-  - **테마 모드**: 라이트 모드 전환 시 고광도의 태양(Sun) 회전 애니메이션과 앰버 조명 효과가 나타나며, 눈부심 방지를 위한 고대비 다크 차콜 텍스트 오버라이드가 완벽하게 적용됩니다.
-  - **언어 설정**: 한국어와 영어 간의 번역 사전을 로딩하여 1초 만에 전역 페이지가 변환됩니다.
-- **알림 센터 (Notification Bell)**: 설비의 상태 변화를 연동하여 4종의 고품질 실시간 경보/분석 완료/정비 지침/전류 계측 알림을 제공합니다.
-  - 읽지 않은 알림 개수를 나타내는 펄싱 배지, 카드 클릭 시 개별 읽음 페이드아웃, 원클릭 전체 읽음 처리 등 최신 반응형 UX를 구비하고, 클릭 이외 영역 선택 시 부드럽게 닫히는(Click-Away) 감지기를 갖췄습니다.
+### 2. 고품격 UI/UX 환경설정 및 실시간 알림 시스템 ⚙️🚨
+- **세련된 테마 전환**: 라이트 모드 전환 시 고광도의 태양(Sun) 회전 애니메이션과 앰버 조명 효과가 나타나며, 완벽한 고대비 다크 차콜 텍스트 오버라이드가 적용되어 눈의 피로를 덜어줍니다.
+- **다국어 지원 (KO/EN)**: 한국어와 영어 간 번역 사전을 통해 단 1초 만에 전역 페이지가 완벽하게 변환됩니다.
+- **실시간 알림 센터 (Notification Bell)**: 설비의 상태 변화를 연동하여 4종의 고품질 실시간 알림(경보/분석/정비지침 등)을 제공합니다. 읽지 않은 배지 처리 및 외부 클릭 시 부드럽게 닫히는 최신 반응형 UX 트렌드를 반영했습니다.
 
-### 3. 실시간 흔들림 계측 및 고장-원인 대조 매트릭스 <표 6.7.9> 동적 동기화 📊
-- 대시보드의 **"24시간 설비 실시간 효율"** 수치에 1.2초 간격의 미세 오차 흔들림(Fluctuation) 상태값을 소수점 둘째 자리까지 적용하여 실제 계측 중인 생동감을 극대화했습니다.
-- 상수도 시설 표준 매뉴얼 <표 6.7.9> 기반의 **고장-원인 매트릭스**의 19개 표준 행 구성을 상시 고정하고, 비활성 셀의 legible opacity-40 처리를 통해 전체 표의 균형감을 살렸습니다.
-- 업로드된 CSV 융합 결함(예: 축 정렬 불량) 검출 시 **에메랄드 펄스 글레이징 강조 배지**를 통해 활성 징후를 격조 있게 표출하며, **웹 진단 화면과 A4 인쇄용 작업 지시서 모달 간의 교차 매칭 판정을 100% 동기화**하여 출력 즉시 현장 점검에 투입 가능한 정밀도를 완성했습니다.
+### 3. 고장-원인 대조 매트릭스 <표 6.7.9> 동적 동기화 📊
+- 대시보드의 **"24시간 설비 실시간 효율"** 수치에 1.2초 간격의 미세 오차 흔들림(Fluctuation) 효과를 부여하여, 실제 계측 중인 것과 같은 현장감을 극대화했습니다.
+- 상수도 시설 표준 매뉴얼 <표 6.7.9> 기반의 **고장-원인 매트릭스**의 19개 표준 행 구성을 항시 유지하며 비활성 영역을 반투명하게 처리하여 전체적인 UI 균형감을 살렸습니다.
+- 업로드된 센서 데이터에 따른 결함 징후 감지 시 해당 원인을 명확하게 짚어주는 펄스 강조 애니메이션 배지를 제공하며, **출력용 정비 작업 지시서 모달과 활성 징후 매칭 판정을 100% 동기화**하여 출력 즉시 실무 현장에 투입 가능합니다.
 
 ---
 
-## 1. 디렉토리 구조
+## 🛠️ 기술 스택 (Tech Stack)
 
-```
-pump_diagnosis/
-├── README.md                        ← (이 파일)
-├── manuals/                         ← 원본 PDF 정비 매뉴얼 (RAG 원천)
-│   ├── 원심펌프_유지보수절차서.pdf
-│   └── 유지관리매뉴얼_펌프.pdf
-│
-├── backend/                         ← FastAPI 백엔드 (Python)
-│   ├── main_fusion.py               ★ 메인 진입점. 진동+전류 융합 진단 API
-│   ├── main.py                      └─ 구버전 (단일 센서). 하위호환용
-│   ├── ingest.py                    ← manuals/*.pdf → Chroma 벡터DB 적재 스크립트
-│   ├── requirements.txt             ← Python 패키지 목록
-│   ├── .env.example                 ← 환경변수 템플릿 (커밋됨)
-│   ├── .env                         ← 실제 키 (gitignore, 직접 생성 필요)
-│   ├── chroma_db/                   ← ingest.py 가 생성한 RAG 벡터DB (영속)
-│   ├── samples/                     ← 테스트용 CSV (정상/고장 예시)
-│   ├── temp_uploads/                ← 업로드 임시 저장 (자동 생성/삭제)
-│   └── .venv/                       ← Python 가상환경
-│
-├── pump-logic-ai/
-│   ├── Rotating_Diagnosis/          ← XGBoost 학습 파이프라인
-│   │   ├── src/
-│   │   │   ├── config.py            ← 경로/하이퍼파라미터/4개 task 정의
-│   │   │   ├── feature_extraction.py← CSV → 통계 특징(평균/RMS/첨도 등)
-│   │   │   ├── dataset_builder.py   ← 폴더구조 스캔 → 학습용 DataFrame 생성
-│   │   │   └── train.py             ← 8개 모델 학습 + 평가 + 저장
-│   │   ├── models/                  ★ 학습된 모델 8개 (백엔드가 로드)
-│   │   │   ├── vibration__축정렬불량.pkl
-│   │   │   ├── vibration__회전체불평형.pkl
-│   │   │   ├── vibration__베어링불량.pkl
-│   │   │   ├── vibration__벨트느슨함.pkl
-│   │   │   ├── current__축정렬불량.pkl
-│   │   │   ├── current__회전체불평형.pkl
-│   │   │   ├── current__베어링불량.pkl
-│   │   │   └── current__벨트느슨함.pkl
-│   │   ├── generate_sample_data.py  ← 데모용 합성 데이터 생성기
-│   │   └── requirements.txt
-│   │
-│   └── pump-logic-ai/               ← React + Vite 프론트엔드
-│       ├── src/
-│       │   ├── App.jsx              ← 메인 화면 (CSV 업로드 / 결과 표시)
-│       │   ├── main.jsx             ← React 엔트리
-│       │   └── index.css            ← Tailwind 진입
-│       ├── package.json             ← React 19 / Vite 8 / recharts / papaparse
-│       └── vite.config.js
-└── .gitignore
-```
+### Frontend
+- **Framework**: React 19 / Vite 8
+- **Styling**: Tailwind CSS 4, CSS Glassmorphism
+- **Hosting**: Firebase Hosting
+- **Libraries**: Recharts (시각화), PapaParse (CSV 프리뷰 파싱)
+
+### Backend & AI
+- **Framework**: FastAPI (Python 3.12)
+- **Deployment**: Google Cloud Run (Serverless Container) / Google Cloud Build
+- **Machine Learning**: XGBoost (진동 4종 + 전류 4종, 총 8개 Task 앙상블 모델)
+- **RAG & LLM**: Chroma DB (벡터 저장소), LangChain, Google Gemini 2.5 Flash
 
 ---
 
-## 2. 필수 설치 환경 (Prerequisites)
+## 📊 진단 가능한 4대 주요 고장 (Fault Types)
 
-| 항목 | 요구 버전 | 비고 |
-|---|---|---|
-| **Python** | 3.12 권장 | 백엔드 가상환경용 |
-| **Node.js** | **≥ 20.19** 또는 **≥ 22.12** | Vite 8 요구사항. Ubuntu 의 기본 `apt install nodejs` (18.x) 는 **돌아가지 않음** → `nvm` 사용 권장 |
-| **npm** | Node 와 함께 | WSL 사용자는 Linux 측 npm 필수 (Windows npm 은 UNC 경로 거부) |
-| **Google API Key** | Gemini 2.5 Flash + Embedding 사용권 | https://aistudio.google.com/app/apikey |
+본 시스템은 두 가지 이종 센서(진동, 전류)의 교차 분석(Decision-Level Fusion)을 통해 아래 4가지 고장을 매우 높은 정확도로 정밀 진단합니다.
 
-### Node.js 가 없거나 18.x 인 경우 (nvm 으로 설치)
-
-```bash
-# nvm 설치 (한 번만)
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-source ~/.bashrc
-
-# Node 22 설치 + 활성화
-nvm install 22
-nvm use 22
-node --version    # v22.x.x 확인
-```
-
----
-
-## 3. 설치 (Install)
-
-### 3-1. 백엔드 Python 의존성
-
-```bash
-cd backend
-python3.12 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-설치되는 패키지와 역할:
-
-| 카테고리 | 패키지 | 역할 |
-|---|---|---|
-| **웹 프레임워크** | `fastapi` | REST API 서버 |
-|  | `uvicorn` | ASGI 런타임 |
-|  | `python-multipart` | `UploadFile` 멀티파트 파싱 (없으면 업로드 500) |
-|  | `pydantic` | 요청/응답 스키마 |
-| **환경변수** | `python-dotenv` | `backend/.env` 자동 로드 |
-| **데이터/ML** | `numpy` | 신호 통계 (RMS, ptp 등) |
-|  | `pandas` | CSV 파싱, DataFrame |
-|  | `scikit-learn` | 모델 평가 메트릭 |
-|  | `xgboost` | 8개 고장 분류 모델 본체 |
-|  | `joblib` | `.pkl` 모델 로드 |
-| **LLM / RAG** | `langchain-core`, `langchain-community` | LangChain 본체 |
-|  | `langchain-google-genai` | Gemini 임베딩 + Chat 래퍼 |
-|  | `langchain-text-splitters` | PDF 청킹 |
-|  | `google-genai` | Google Gemini SDK |
-|  | `chromadb` | 로컬 벡터 DB |
-| **PDF (ingest)** | `pypdf` | `ingest.py` 의 PDF 파서 |
-
-### 3-2. 프론트엔드 Node 의존성
-
-```bash
-cd pump-logic-ai/pump-logic-ai
-npm install
-```
-
-설치되는 주요 패키지:
-
-| 패키지 | 역할 |
+| 분류 | 설명 |
 |---|---|
-| `react` 19, `react-dom` 19 | UI 프레임워크 |
-| `vite` 8, `@vitejs/plugin-react` | 개발 서버 + 번들러 |
-| `tailwindcss` 4, `@tailwindcss/vite` | 스타일링 |
-| `recharts` | 진단 결과 시각화 차트 |
-| `papaparse` | CSV 클라이언트 프리뷰 파싱 |
-| `lucide-react` | 아이콘 |
+| **축정렬불량 (Misalignment)** | 모터-펌프 간 축 동심도 편차 발생 (주파수 스펙트럼 1X, 2X, 3X 조화파 분석) |
+| **회전체불평형 (Unbalance)** | 임펠러에 이물질 등 잔류 불평형 질량 발생 (1X 성분 우세) |
+| **베어링불량 (Bearing Fault)** | 내/외륜 마모 및 윤활수(그리스) 부족 현상 (고주파 대역 충격 에너지 증가) |
+| **벨트느슨함 (Belt Looseness)** | 구동 V-벨트 장력 저하 및 처짐 발생 (Slip Frequency 발생 및 전류 진폭 변화) |
 
-### 3-3. API 키 설정 (필수)
-
-`backend/.env.example` 을 복사해서 `.env` 만들고 실제 키 입력:
-
-```bash
-cd backend
-cp .env.example .env
-# 에디터로 열어서 GOOGLE_API_KEY=<발급받은-키> 로 교체
-```
-
-`.env` 파일 내용 예시:
-```
-GOOGLE_API_KEY=AIzaSy...실제발급키
-```
-
-> **중요**: `.env` 는 `.gitignore` 에 등록되어 절대 커밋되지 않습니다.
-> 키가 없거나 비어있으면 **백엔드가 부팅 자체를 거부**합니다 (fail-fast).
-
----
-
-## 4. 실행 (Run)
-
-### 4-1. (최초 1회) PDF 매뉴얼 → 벡터 DB 적재
-
-`backend/chroma_db/` 가 이미 존재하면 **건너뛰어도 됨**. 새로 만들려면:
-
-```bash
-cd backend
-source .venv/bin/activate
-python ingest.py
-```
-
-→ `manuals/*.pdf` 를 청크로 쪼개 임베딩한 뒤 `backend/chroma_db/` 에 저장.
-
-### 4-2. 백엔드 서버 (터미널 1)
-
-```bash
-cd backend
-source .venv/bin/activate
-python main_fusion.py
-```
-
-성공 로그:
-```
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-```
-
-### 4-3. 프론트엔드 (터미널 2)
-
-```bash
-cd pump-logic-ai/pump-logic-ai
-nvm use 22                   # Node 18 환경이라면 필수
-npm run dev
-```
-
-성공 로그:
-```
-  VITE v8.0.13  ready in 1505 ms
-  ➜  Local:   http://localhost:5173/
-```
-
-### 4-4. 접속
-
-| 서비스 | URL |
-|---|---|
-| **웹 UI (메인)** | http://localhost:5173 |
-| 백엔드 API | http://localhost:8000 |
-| Swagger 문서 | http://localhost:8000/docs |
-
-### 4-5. cURL 로 백엔드 단독 테스트
-
-```bash
-curl -X POST http://127.0.0.1:8000/api/diagnose/fusion \
-  -F "vibration_file=@backend/samples/vibration_shaft_alignment_fault_sample.csv" \
-  -F "current_file=@backend/samples/current_shaft_alignment_fault_sample.csv"
-```
-
-→ 위험도 / 근거 / 증상 / 원인 / 조치 / 예방 6개 필드의 JSON 리포트 반환.
-
----
-
-## 5. 문제 해결 (Troubleshooting)
-
-| 증상 | 원인 / 해결 |
-|---|---|
-| `RuntimeError: GOOGLE_API_KEY 가 설정되지 않았습니다` | `backend/.env` 생성 안 됨. 3-3 단계 수행 |
-| `403 PERMISSION_DENIED: Your API key was reported as leaked` | 키가 무효화됨. AI Studio 에서 새로 발급 후 `.env` 교체 |
-| `vite: Node.js version 20.19+ or 22.12+ required` | Node 18 이하 사용 중. `nvm install 22 && nvm use 22` |
-| `'vite' ...인식되지 않습니다` (한글 깨짐) | (WSL) Windows npm 이 PATH 우선. `which npm` 확인 후 Linux 측 nvm 의 npm 사용 |
-| 진단 결과가 "모델 파일 없음" 으로만 응답 | `pump-logic-ai/Rotating_Diagnosis/models/*.pkl` 8개 존재 확인 |
-| `유지보수 매뉴얼 데이터베이스가 아직 비어 있습니다` | `python ingest.py` 미실행. 4-1 단계 수행 |
-
----
-
-## 6. 진단되는 4가지 고장 유형
-
-| Task | 의미 |
-|---|---|
-| 축정렬불량 (Misalignment) | 모터-펌프 축 동심도 편차 |
-| 회전체불평형 (Unbalance) | 임펠러 잔류 불평형 질량 |
-| 베어링불량 (Bearing Fault) | 내외륜 마모 / 윤활 불량 |
-| 벨트느슨함 (Belt Looseness) | V-벨트 장력 처짐 |
-
-각 task 마다 진동/전류 센서별 모델이 따로 학습됨 → 총 8개 모델.
-두 센서 모두에서 양성 → **DANGER** / 한쪽만 → **WARNING** / 둘 다 음성 → **NORMAL**.
-
----
-
-## 7. API 요약
-
-| Method | Endpoint | 설명 |
-|---|---|---|
-| POST | `/api/diagnose` | 단일 CSV (진동 or 전류 자동 감지) → 진단 |
-| POST | `/api/diagnose/fusion` | 진동 + 전류 동시 업로드 → 융합 진단 (권장) |
-
-응답 스키마 (`DiagnosticReport`):
-- `risk_level`: `DANGER` / `WARNING` / `NORMAL`
-- `risk_rationale`: 엔지니어링 분석 근거
-- `checked_symptoms`: 감지된 이상 증상 리스트
-- `root_cause`: 최종 근본 원인
-- `recommended_actions`: 매뉴얼 기반 조치 절차 리스트
-- `preventive_maintenance`: 예방 정비 가이드라인
+> 💡 **진단 판정 로직**: 두 센서 모두에서 징후가 검출되면 **DANGER (위험)**, 한 센서에서만 검출되면 **WARNING (주의)**, 정상일 경우 **NORMAL (정상)** 로 판정하여 실무자의 직관적인 판단을 돕습니다.
